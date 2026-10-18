@@ -49,6 +49,9 @@ class EvalQuestion:
     date_from: str | None = None
     date_to: str | None = None
     absent_terms: list[str] = field(default_factory=list)
+    # Facts a correct answer must state: every group must match, any string in a group
+    # counts (used by the deterministic answer grader in Phase 2).
+    answer_facts: list[list[str]] = field(default_factory=list)
     notes: str | None = None
 
     @classmethod
