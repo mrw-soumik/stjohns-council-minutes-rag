@@ -36,11 +36,11 @@
 
   <rect class="box" x="502" y="102" width="208" height="68" rx="10"/>
   <text class="t" x="516" y="126">Parse and chunk</text>
-  <text class="s" x="516" y="146">agenda items, motions, votes;</text>
-  <text class="s" x="516" y="162">a motion is never split</text>
+  <text class="s" x="516" y="146">agenda items, motions,</text>
+  <text class="s" x="516" y="162">votes; no motion is split</text>
 
   <rect class="box" x="736" y="102" width="208" height="68" rx="10"/>
-  <text class="t" x="750" y="126">Embed and index terms</text>
+  <text class="t" x="750" y="126">Embed and index</text>
   <text class="s" x="750" y="146">bge-small-en-v1.5 (ONNX)</text>
   <text class="s" x="750" y="162">and BM25 keywords</text>
 
@@ -65,7 +65,7 @@
 
   <rect class="box" x="52" y="400" width="410" height="50" rx="10"/>
   <text class="t" x="66" y="421">Answer model</text>
-  <text class="s" x="66" y="440">local Qwen3.5-9B with MLX (default) or Claude with Citations</text>
+  <text class="s" x="66" y="440">local Qwen3.5-9B (MLX, default) or Claude with Citations</text>
   <path class="arr" d="M257 450 V470" marker-end="url(#arrow)"/>
 
   <rect class="box" x="52" y="472" width="410" height="50" rx="10"/>
@@ -89,12 +89,12 @@
 
   <rect class="web" x="516" y="400" width="410" height="50" rx="10"/>
   <text class="t" x="530" y="421">Static files in docs/</text>
-  <text class="s" x="530" y="440">index, vectors and postings; precomputed showcase answers</text>
+  <text class="s" x="530" y="440">index, vectors, postings; precomputed example answers</text>
   <path class="arr" d="M721 450 V470" marker-end="url(#arrow)"/>
 
   <rect class="web" x="516" y="472" width="410" height="50" rx="10"/>
   <text class="t" x="530" y="493">Search in the browser</text>
-  <text class="s" x="530" y="512">transformers.js embeds the query; search.js ranks like Python</text>
+  <text class="s" x="530" y="512">transformers.js embeds queries; ranking matches Python</text>
   <path class="arr" d="M721 522 V542" marker-end="url(#arrow)"/>
 
   <rect class="web" x="516" y="544" width="410" height="50" rx="10"/>
