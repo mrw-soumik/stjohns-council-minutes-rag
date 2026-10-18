@@ -108,7 +108,8 @@ def cmd_search(args: argparse.Namespace) -> int:
 
 
 def cmd_ask(args: argparse.Namespace) -> int:
-    from council_rag.generation import AnswerGenerator, GenerationError
+    from council_rag.answers import make_answerer
+    from council_rag.generation import GenerationError
     from council_rag.service import load_retriever
 
     paths = data_paths(args.data_dir)
@@ -116,19 +117,22 @@ def cmd_ask(args: argparse.Namespace) -> int:
     results = retriever.search(
         args.question, k=args.k, date_from=args.date_from, date_to=args.date_to
     )
-    generator = AnswerGenerator(usage_log=paths.logs / "usage.jsonl")
+    answerer = make_answerer(args.backend, usage_log=paths.logs / "usage.jsonl")
     try:
-        answer = generator.answer(args.question, [r.chunk for r in results])
+        answer = answerer.answer(args.question, [r.chunk for r in results])
     except GenerationError as exc:
         print(f"Answer generation failed: {exc}", file=sys.stderr)
         return 2
     print(answer.text)
     for i, c in enumerate(answer.citations, start=1):
-        print(f'  [{i}] {c.meeting_name}, {c.meeting_date}, item {c.item_ref}: "{c.cited_text}"')
+        print(f"  [{i}] {c.meeting_name}, {c.meeting_date}, item {c.item_ref}: {c.item_title}")
         print(f"      {c.url}")
     if answer.usage:
         u = answer.usage
-        print(f"({u.model}; {u.input_tokens} in / {u.output_tokens} out tokens; ${u.cost_usd:.4f})")
+        print(
+            f"({u.model}; {u.input_tokens} in / {u.output_tokens} out tokens; "
+            f"${u.cost_usd:.4f}; {answer.latency_s} s)"
+        )
     return 0
 
 
@@ -136,6 +140,12 @@ def cmd_eval_retrieval(args: argparse.Namespace) -> int:
     from council_rag.evaluation.retrieval_eval import main as eval_main
 
     return eval_main(args)
+
+
+def cmd_eval_answers(args: argparse.Namespace) -> int:
+    from council_rag.evaluation.answer_eval import main as answers_main
+
+    return answers_main(args)
 
 
 def cmd_verify_eval(args: argparse.Namespace) -> int:
@@ -155,7 +165,8 @@ def cmd_export_demo(args: argparse.Namespace) -> int:
 def cmd_serve(args: argparse.Namespace) -> int:
     import uvicorn
 
-    uvicorn.run("council_rag.api:app", host=args.host, port=args.port)
+    # access_log=False: uvicorn's access log records client IP addresses (NFR-06, PA-09)
+    uvicorn.run("council_rag.api:app", host=args.host, port=args.port, access_log=False)
     return 0
 
 
@@ -212,9 +223,15 @@ def build_parser() -> argparse.ArgumentParser:
     add_filters(p)
     p.set_defaults(func=cmd_search)
 
-    p = sub.add_parser("ask", help="answer a question with citations (calls the Claude API)")
+    p = sub.add_parser("ask", help="answer a question with citations")
     p.add_argument("question")
-    p.add_argument("-k", type=int, default=8)
+    p.add_argument("-k", type=int, default=6, help="passages given to the model")
+    p.add_argument(
+        "--backend",
+        choices=["local", "claude"],
+        default=None,
+        help="answer model (default: local; 'claude' calls the paid API)",
+    )
     add_filters(p)
     p.set_defaults(func=cmd_ask)
 
@@ -223,6 +240,12 @@ def build_parser() -> argparse.ArgumentParser:
 
     add_arguments(p)
     p.set_defaults(func=cmd_eval_retrieval)
+
+    p = sub.add_parser("eval-answers", help="grade answers on the evaluation set")
+    from council_rag.evaluation.answer_eval import add_arguments as add_answer_arguments
+
+    add_answer_arguments(p)
+    p.set_defaults(func=cmd_eval_answers)
 
     p = sub.add_parser("verify-eval", help="check gold evidence in the evaluation set")
     p.add_argument("--questions", default="eval/questions.jsonl")

@@ -26,6 +26,7 @@ dependencies = [
 
 [project.optional-dependencies]
 pgvector = ["psycopg[binary]>=3.2", "pgvector>=0.3"]
+local = ["mlx-lm>=0.32; sys_platform == 'darwin' and platform_machine == 'arm64'"]
 dev = ["pytest>=8", "ruff>=0.6"]
 
 [project.scripts]

@@ -15,9 +15,10 @@ from fastapi import Depends, FastAPI, HTTPException
 from pydantic import BaseModel, Field, model_validator
 
 from council_rag import __version__
+from council_rag.answers import Answerer, configured_model_label, make_answerer
 from council_rag.chunking import make_excerpt
 from council_rag.config import data_paths
-from council_rag.generation import AnswerGenerator, GenerationError
+from council_rag.generation import GenerationError
 from council_rag.index import IndexMeta
 from council_rag.retrieval import HybridRetriever, SearchResult
 
@@ -98,7 +99,7 @@ class UsageOut(BaseModel):
 
 
 class AskResponse(BaseModel):
-    status: Literal["answered", "not_found", "refused", "truncated"]
+    status: Literal["answered", "not_found", "refused", "truncated", "invalid_output"]
     answer: str
     citations: list[CitationOut]
     passages: list[Passage]
@@ -144,7 +145,7 @@ class AppState:
     def __init__(self) -> None:
         self.retriever: HybridRetriever | None = None
         self.meta: IndexMeta | None = None
-        self.generator: AnswerGenerator | None = None
+        self.generator: Answerer | None = None
 
     def get_retriever(self) -> tuple[HybridRetriever, IndexMeta]:
         if self.retriever is None or self.meta is None:
@@ -156,9 +157,9 @@ class AppState:
                 raise HTTPException(status_code=503, detail=str(exc)) from exc
         return self.retriever, self.meta
 
-    def get_generator(self) -> AnswerGenerator:
+    def get_generator(self) -> Answerer:
         if self.generator is None:
-            self.generator = AnswerGenerator(usage_log=data_paths().logs / "usage.jsonl")
+            self.generator = make_answerer(usage_log=data_paths().logs / "usage.jsonl")
         return self.generator
 
 
@@ -180,8 +181,6 @@ RetrieverDep = Annotated[tuple[HybridRetriever, IndexMeta], Depends(retriever_de
 @app.get("/health", response_model=Health)
 def health(dep: RetrieverDep) -> Health:
     _, meta = dep
-    from council_rag.config import CLAUDE_MODEL
-
     return Health(
         status="ok",
         version=__version__,
@@ -190,7 +189,7 @@ def health(dep: RetrieverDep) -> Health:
         coverage_from=date.fromisoformat(meta.date_min),
         coverage_to=date.fromisoformat(meta.date_max),
         embedding_model=f"{meta.embedding_repo}@{meta.embedding_revision[:8]}",
-        answer_model=CLAUDE_MODEL,
+        answer_model=configured_model_label(),
     )
 
 
@@ -221,6 +220,8 @@ def ask(req: AskRequest, dep: RetrieverDep) -> AskResponse:
     except GenerationError as exc:
         status = 503 if exc.status_code in (401, 403) else 502
         raise HTTPException(status_code=status, detail=str(exc)) from exc
+    except ImportError as exc:  # the local backend needs the optional [local] extra (MLX)
+        raise HTTPException(status_code=503, detail=f"Answer model unavailable: {exc}") from exc
     took = (time.perf_counter() - started) * 1000
     usage: dict[str, Any] | None = None
     if answer.usage is not None:

@@ -24,11 +24,17 @@ import json
 import logging
 import time
 from collections.abc import Sequence
-from dataclasses import asdict, dataclass, field
-from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+from council_rag.answers import (
+    NOT_FOUND_MESSAGE,
+    Answer,
+    Citation,
+    UsageLogger,
+    UsageRecord,
+    citation_for,
+)
 from council_rag.chunking import Chunk, long_date
 from council_rag.config import CLAUDE_EFFORT, CLAUDE_MODEL
 from council_rag.pricing import cost_usd
@@ -36,9 +42,6 @@ from council_rag.pricing import cost_usd
 log = logging.getLogger(__name__)
 
 NOT_FOUND_SENTINEL = "NOT_FOUND"
-NOT_FOUND_MESSAGE = (
-    "I could not find this in the Regular Council Meeting minutes that were searched."
-)
 FALLBACK_BETA = "server-side-fallback-2026-07-01"
 
 SYSTEM_PROMPT = """\
@@ -68,50 +71,6 @@ class GenerationError(RuntimeError):
     def __init__(self, message: str, status_code: int | None = None) -> None:
         super().__init__(message)
         self.status_code = status_code
-
-
-@dataclass
-class Citation:
-    document_index: int
-    chunk_id: str
-    meeting_name: str
-    meeting_date: str
-    item_ref: str
-    item_title: str
-    url: str | None
-    pdf_url: str | None
-    cited_text: str
-    start_char: int
-    end_char: int
-    answer_start: int  # span of the answer text this citation supports
-    answer_end: int
-
-
-@dataclass
-class UsageRecord:
-    model: str
-    input_tokens: int
-    output_tokens: int
-    cache_creation_input_tokens: int
-    cache_read_input_tokens: int
-    cost_usd: float
-    attempts: int = 1  # >1 when a refusal fallback ran
-
-
-@dataclass
-class Answer:
-    status: str  # "answered" | "not_found" | "refused" | "truncated"
-    text: str
-    citations: list[Citation] = field(default_factory=list)
-    model: str | None = None
-    stop_reason: str | None = None
-    usage: UsageRecord | None = None
-    latency_s: float | None = None
-    detail: str | None = None
-
-    @property
-    def found(self) -> bool:
-        return self.status == "answered"
 
 
 def document_title(chunk: Chunk) -> str:
@@ -222,15 +181,9 @@ def parse_message(message: Any, chunks: Sequence[Chunk]) -> Answer:
                 continue
             chunk = chunks[idx]
             citations.append(
-                Citation(
-                    document_index=idx,
-                    chunk_id=chunk.chunk_id,
-                    meeting_name=chunk.meeting_name,
-                    meeting_date=chunk.meeting_date,
-                    item_ref=chunk.item_ref,
-                    item_title=chunk.item_title,
-                    url=chunk.url,
-                    pdf_url=chunk.pdf_url,
+                citation_for(
+                    chunk,
+                    idx,
                     cited_text=str(_get(raw, "cited_text") or ""),
                     start_char=int(_get(raw, "start_char_index")),
                     end_char=int(_get(raw, "end_char_index")),
@@ -273,32 +226,8 @@ def parse_message(message: Any, chunks: Sequence[Chunk]) -> Answer:
     )
 
 
-class UsageLogger:
-    """Appends one JSON line per model call; the question text is never written (NFR-06)."""
-
-    def __init__(self, path: Path | None) -> None:
-        self.path = path
-
-    def write(self, answer: Answer, n_documents: int, request_id: str | None) -> None:
-        if self.path is None or answer.usage is None:
-            return
-        self.path.parent.mkdir(parents=True, exist_ok=True)
-        row = {
-            "ts": datetime.now(UTC).isoformat(timespec="seconds"),
-            "request_id": request_id,
-            "status": answer.status,
-            "stop_reason": answer.stop_reason,
-            "latency_s": answer.latency_s,
-            "n_documents": n_documents,
-            "n_citations": len(answer.citations),
-            **asdict(answer.usage),
-        }
-        with self.path.open("a", encoding="utf-8") as fh:
-            fh.write(json.dumps(row) + "\n")
-
-
-class AnswerGenerator:
-    """Calls Claude through the official ``anthropic`` SDK."""
+class ClaudeAnswerer:
+    """Calls Claude through the official ``anthropic`` SDK (the ``claude`` backend)."""
 
     def __init__(
         self,
@@ -315,6 +244,7 @@ class AnswerGenerator:
             client = anthropic.Anthropic(timeout=timeout_s, max_retries=2)
         self.client = client
         self.model = model
+        self.model_name = model
         self.effort = effort
         self.max_tokens = max_tokens
         self.logger = UsageLogger(usage_log)
@@ -351,5 +281,9 @@ class AnswerGenerator:
         answer = parse_message(message, chunks)
         answer.latency_s = round(latency, 3)
         answer.usage = usage_record(message)
-        self.logger.write(answer, len(chunks), getattr(message, "_request_id", None))
+        self.logger.write(answer, len(chunks))
         return answer
+
+
+# Backwards-compatible name used by earlier code and tests.
+AnswerGenerator = ClaudeAnswerer

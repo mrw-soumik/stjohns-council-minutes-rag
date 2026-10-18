@@ -36,13 +36,16 @@ def client(two_meeting_chunks, fake_embedder):
         api.state = original
 
 
-def test_health_reports_coverage_and_disclaimer(client) -> None:
+def test_health_reports_coverage_disclaimer_and_model(client, monkeypatch) -> None:
     http, _, _ = client
+    monkeypatch.delenv("COUNCIL_RAG_LLM_BACKEND", raising=False)
     body = http.get("/health").json()
     assert body["status"] == "ok"
     assert (body["coverage_from"], body["coverage_to"]) == ("2023-03-06", "2024-03-04")
-    assert body["answer_model"] == "claude-opus-5-5"
+    assert body["answer_model"] == "Qwen3.5-9B (MLX 4-bit)"  # local backend by default
     assert "Not affiliated" in body["disclaimer"]
+    monkeypatch.setenv("COUNCIL_RAG_LLM_BACKEND", "claude")
+    assert http.get("/health").json()["answer_model"] == "claude-opus-5-5"
 
 
 def test_search_returns_short_excerpts_and_links(client) -> None:
