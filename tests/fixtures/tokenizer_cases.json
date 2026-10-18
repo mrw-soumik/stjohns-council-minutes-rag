@@ -1,0 +1,12 @@
+[
+  {"text": "By-Law No. 1736 (re-zoning)", "tokens": ["bylaw", "1736", "rezoning"]},
+  {"text": "St. John's Parks and Libraries", "tokens": ["st", "john", "park", "library"]},
+  {"text": "Café résumé naïve", "tokens": ["cafe", "resume", "naive"]},
+  {"text": "The buses, taxes and analyses", "tokens": ["buse", "taxe", "analyse"]},
+  {"text": "Council approved 3 units at 10 Factory Lane", "tokens": ["council", "approved", "3", "unit", "10", "factory", "lane"]},
+  {"text": "SJMC-R-2024-03-04/001", "tokens": ["sjmcr", "2024", "03", "04", "001"]},
+  {"text": "What did council decide about the bus?", "tokens": ["council", "decide", "bus"]},
+  {"text": "Cities' policies; agencies' fees", "tokens": ["city", "policy", "agency", "fee"]},
+  {"text": "MOTION CARRIED (11 to 0)", "tokens": ["motion", "carried", "11", "0"]},
+  {"text": "Dog-friendly off-leash areas", "tokens": ["dogfriendly", "offleash", "area"]}
+]
