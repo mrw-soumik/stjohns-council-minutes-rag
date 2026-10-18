@@ -75,3 +75,11 @@
 {"id": "un10", "question": "Did council change the rules to allow backyard hens?", "type": "unanswerable", "answerable": false, "absent_terms": ["backyard hens", "chicken"]}
 {"id": "un11", "question": "Did council support a casino on George Street?", "type": "unanswerable", "answerable": false, "absent_terms": ["casino"]}
 {"id": "un12", "question": "Did council approve a public bike-share program?", "type": "unanswerable", "answerable": false, "absent_terms": ["bike share", "bike-share", "bikeshare"]}
+{"id": "un13", "question": "Did council approve a congestion charge for driving downtown?", "type": "unanswerable", "answerable": false, "absent_terms": ["congestion charg", "congestion pricing", "congestion fee"]}
+{"id": "un14", "question": "When did council approve a gondola up Signal Hill?", "type": "unanswerable", "answerable": false, "absent_terms": ["gondola", "cable car"]}
+{"id": "un15", "question": "Did council vote to add fluoride to the City's drinking water?", "type": "unanswerable", "answerable": false, "absent_terms": ["fluorid"]}
+{"id": "un16", "question": "Did council approve buying electric buses for Metrobus?", "type": "unanswerable", "answerable": false, "absent_terms": ["electric bus", "battery-electric bus", "zero-emission bus", "electric buses"]}
+{"id": "un17", "question": "Did council approve a new off-leash dog park?", "type": "unanswerable", "answerable": false, "absent_terms": ["off-leash", "dog park"]}
+{"id": "un18", "question": "Did council ban cosmetic pesticides on lawns?", "type": "unanswerable", "answerable": false, "absent_terms": ["pesticide", "herbicide"]}
+{"id": "un19", "question": "Did council adopt a living wage policy for City contractors?", "type": "unanswerable", "answerable": false, "absent_terms": ["living wage"]}
+{"id": "un20", "question": "Which city did council approve as a new sister city?", "type": "unanswerable", "answerable": false, "absent_terms": ["sister city", "twin city", "twinning"]}

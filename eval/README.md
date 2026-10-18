@@ -6,7 +6,7 @@ generated from the JSON files next to it.
 
 ## The question set (`questions.jsonl`)
 
-77 questions about Regular Council Meeting minutes from January 2023 to September 2026:
+85 questions about Regular Council Meeting minutes from January 2023 to September 2026:
 
 | Type | Count | What it tests |
 |---|---|---|
@@ -15,11 +15,14 @@ generated from the JSON files next to it.
 | `vote_outcome` | 14 | Carried or lost, the vote count, who voted against |
 | `date_filtered` | 11 | The same question asked with different meeting-date ranges (budgets, the Tely 10, 319 Hamilton Avenue) |
 | `paraphrase` | 13 | Wording that avoids the terms used in the minutes ("dig gravel on farmland" for a quarry referral) |
-| `unanswerable` | 12 | Plausible topics that never appear in the minutes (rent control, a 2027 budget, ride-sharing) |
+| `unanswerable` | 20 | Plausible topics that never appear in the minutes (rent control, a 2027 budget, electric buses for Metrobus, fluoride in drinking water) |
 
 The 65 answerable questions have gold meetings in 2023 (29), 2024 (12), 2025 (12) and 2026 (12);
 two of them have more than one gold item (a decision that was later rescinded or revisited).
-Unanswerable questions are about 16% of the set.
+The set meets the business-analysis requirement NFR-01.1 (at least 50 answerable and at least
+20 unanswerable questions, exact-term and paraphrased wording, several years). Eight of the
+unanswerable questions were added after the first answer run to reach 20; several of them sit
+next to topics that do appear (Metrobus, Signal Hill, drinking water), which makes declining harder.
 
 Each answerable item records the gold meeting (date, eSCRIBE meeting id and, when one exists,
 the minutes PDF document id), the agenda item reference, one or more **evidence** strings copied
@@ -71,6 +74,29 @@ reported as `item_hit@5` in the JSON files.
 `qrels.json` stores the relevant chunk ids per question for the default chunking. CI uses it
 with the committed browser index, so it needs no City documents.
 
+## Answer evaluation
+
+`council-rag eval-answers` runs every question through hybrid retrieval (with the question's
+date filter) and the answer backend, then grades each reply without a model judge:
+
+* **correct** (strict): the answer was given, every `answer_facts` group appears in it, and at
+  least one citation points to a passage holding the gold evidence;
+* **citation precision**: share of citations that point to a gold-evidence passage. A citation
+  to a passage that supports the claim but is not the gold item counts against it, so this is a
+  lower bound on "citations point to a passage that supports the claim" (NFR-02, PA-03);
+* **declined**: for unanswerable questions, any reply other than an answer (NFR-02, PA-04);
+* **latency**: wall-clock time for retrieval plus generation, with the model already loaded
+  (NFR-03, PA-05); model load time is reported separately;
+* **PA-11**: every answer has at least one citation with meeting name, date, agenda item and an
+  official minutes URL whose anchor exists on the downloaded page;
+* **PA-12**: no passage given to the model lies outside the question's date range.
+
+A local model judge was not used: it would grade its own family's answers, and the
+deterministic checks above cover facts, citations and declines. Rows are written as each
+question finishes (`results.jsonl`), reruns skip finished ids, and `--summarise-only`
+recomputes `summary.json` from saved rows. Full prompts contain minutes text, so they are kept
+under the gitignored `data/eval_traces/` only.
+
 ## Reproducing
 
 From the repository root, with the virtual environment active:
@@ -85,9 +111,13 @@ council-rag eval-retrieval --configs ablations              # one setting change
 council-rag export-demo --out docs/data
 council-rag eval-retrieval --source demo --tag demo_index_fp32_query
 council-rag eval-retrieval --source demo --query-model onnx/model_quantized.onnx --tag demo_index_q8_query
+pip install -e ".[local]"                                   # MLX, Apple silicon only
+council-rag eval-answers -k 6                               # local Qwen3.5-9B, about 15 minutes
+council-rag eval-answers -k 4                               # fewer passages: faster, see results
 npm install && python scripts/embedding_parity.py           # Python vs transformers.js vectors
 python scripts/check_search_parity.py                       # Python vs browser ranking code
 node scripts/screenshots.mjs                                # headless Chrome checks
+python scripts/make_showcase.py                             # demo answers from the k=6 run
 python scripts/make_results_md.py                           # regenerate results/RESULTS.md
 ```
 
