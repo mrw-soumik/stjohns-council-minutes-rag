@@ -1,0 +1,128 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="980" height="820" viewBox="0 0 980 820" role="img" aria-labelledby="t d" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif">
+  <title id="t">Architecture of the St. John's Council Minutes Assistant</title>
+  <desc id="d">A Python pipeline downloads and parses the official HTML minutes, chunks them by agenda item and builds a local search index. Questions go through hybrid retrieval, an answer model (a local Qwen model by default, or Claude), and grounding checks to produce answers with citations. A public-safe export of the index powers a browser-only search demo. A verified test set drives retrieval and answer evaluations, and CI gates on retrieval quality.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#4b5563"/>
+    </marker>
+    <style>
+      .h1 { font-size: 21px; font-weight: 700; fill: #1d2330; }
+      .lane { font-size: 15px; font-weight: 700; fill: #1d2330; }
+      .t { font-size: 15px; font-weight: 700; fill: #1d2330; }
+      .s { font-size: 13px; fill: #3f4654; }
+      .box { fill: #f1ecfa; stroke: #6b4fa3; stroke-width: 1.5; }
+      .idx { fill: #fff6e0; stroke: #b07a00; stroke-width: 1.5; }
+      .cont { fill: #fafafb; stroke: #c9ced6; stroke-width: 1.2; }
+      .ev { fill: #eaf5ef; stroke: #2f7d55; stroke-width: 1.5; }
+      .web { fill: #e9f2fb; stroke: #2f6aa3; stroke-width: 1.5; }
+      .arr { stroke: #4b5563; stroke-width: 2; fill: none; }
+    </style>
+  </defs>
+
+  <rect x="1" y="1" width="978" height="818" rx="22" fill="#ffffff" stroke="#d0d5dd" stroke-width="2"/>
+  <text class="h1" x="34" y="48">How the Council Minutes Assistant fits together</text>
+
+  <!-- 1. Build the index -->
+  <text class="lane" x="34" y="88">1. Build the index (Python; rerun when new minutes are published)</text>
+  <rect class="box" x="34" y="102" width="208" height="68" rx="10"/>
+  <text class="t" x="48" y="126">City meetings portal</text>
+  <text class="s" x="48" y="146">eSCRIBE calendar and</text>
+  <text class="s" x="48" y="162">official HTML minutes</text>
+
+  <rect class="box" x="268" y="102" width="208" height="68" rx="10"/>
+  <text class="t" x="282" y="126">Polite downloader</text>
+  <text class="s" x="282" y="146">one request per 6 s, cached,</text>
+  <text class="s" x="282" y="162">every skip logged</text>
+
+  <rect class="box" x="502" y="102" width="208" height="68" rx="10"/>
+  <text class="t" x="516" y="126">Parse and chunk</text>
+  <text class="s" x="516" y="146">agenda items, motions, votes;</text>
+  <text class="s" x="516" y="162">a motion is never split</text>
+
+  <rect class="box" x="736" y="102" width="208" height="68" rx="10"/>
+  <text class="t" x="750" y="126">Embed and index terms</text>
+  <text class="s" x="750" y="146">bge-small-en-v1.5 (ONNX)</text>
+  <text class="s" x="750" y="162">and BM25 keywords</text>
+
+  <path class="arr" d="M242 136 H266" marker-end="url(#arrow)"/>
+  <path class="arr" d="M476 136 H500" marker-end="url(#arrow)"/>
+  <path class="arr" d="M710 136 H734" marker-end="url(#arrow)"/>
+  <path class="arr" d="M840 170 V204" marker-end="url(#arrow)"/>
+
+  <rect class="idx" x="34" y="206" width="910" height="56" rx="10"/>
+  <text class="t" x="52" y="230">Search index (local only, never committed)</text>
+  <text class="s" x="52" y="250">2,149 chunks from 97 meetings, January 2023 to September 2026 · vectors in NumPy or PostgreSQL + pgvector</text>
+
+  <!-- 2. Answer a question -->
+  <rect class="cont" x="34" y="286" width="446" height="330" rx="14"/>
+  <text class="lane" x="52" y="312">2. Answer a question (FastAPI /ask or CLI)</text>
+  <path class="arr" d="M430 262 V326" marker-end="url(#arrow)"/>
+
+  <rect class="box" x="52" y="328" width="410" height="50" rx="10"/>
+  <text class="t" x="66" y="349">Hybrid retrieval</text>
+  <text class="s" x="66" y="368">BM25 + dense vectors, reciprocal rank fusion, date filter</text>
+  <path class="arr" d="M257 378 V398" marker-end="url(#arrow)"/>
+
+  <rect class="box" x="52" y="400" width="410" height="50" rx="10"/>
+  <text class="t" x="66" y="421">Answer model</text>
+  <text class="s" x="66" y="440">local Qwen3.5-9B with MLX (default) or Claude with Citations</text>
+  <path class="arr" d="M257 450 V470" marker-end="url(#arrow)"/>
+
+  <rect class="box" x="52" y="472" width="410" height="50" rx="10"/>
+  <text class="t" x="66" y="493">Grounding checks</text>
+  <text class="s" x="66" y="512">JSON schema, cited passages only, honest "not found"</text>
+  <path class="arr" d="M257 522 V542" marker-end="url(#arrow)"/>
+
+  <rect class="box" x="52" y="544" width="410" height="50" rx="10"/>
+  <text class="t" x="66" y="565">Answer with citations</text>
+  <text class="s" x="66" y="584">meeting, date, agenda item, link to the official minutes</text>
+
+  <!-- 3. Browser demo -->
+  <rect class="cont" x="498" y="286" width="446" height="330" rx="14"/>
+  <text class="lane" x="516" y="312">3. Browser demo (GitHub Pages, no server)</text>
+  <path class="arr" d="M894 262 V326" marker-end="url(#arrow)"/>
+
+  <rect class="web" x="516" y="328" width="410" height="50" rx="10"/>
+  <text class="t" x="530" y="349">Public-safe export</text>
+  <text class="s" x="530" y="368">int8 vectors, hashed term counts, excerpts up to 300 characters</text>
+  <path class="arr" d="M721 378 V398" marker-end="url(#arrow)"/>
+
+  <rect class="web" x="516" y="400" width="410" height="50" rx="10"/>
+  <text class="t" x="530" y="421">Static files in docs/</text>
+  <text class="s" x="530" y="440">index, vectors and postings; precomputed showcase answers</text>
+  <path class="arr" d="M721 450 V470" marker-end="url(#arrow)"/>
+
+  <rect class="web" x="516" y="472" width="410" height="50" rx="10"/>
+  <text class="t" x="530" y="493">Search in the browser</text>
+  <text class="s" x="530" y="512">transformers.js embeds the query; search.js ranks like Python</text>
+  <path class="arr" d="M721 522 V542" marker-end="url(#arrow)"/>
+
+  <rect class="web" x="516" y="544" width="410" height="50" rx="10"/>
+  <text class="t" x="530" y="565">Ranked passages</text>
+  <text class="s" x="530" y="584">grouped by agenda item, with links to the official minutes</text>
+
+  <!-- 4. Evaluation and CI -->
+  <rect class="cont" x="34" y="636" width="910" height="160" rx="14"/>
+  <text class="lane" x="52" y="662">4. Evaluation and CI (CI needs no City documents)</text>
+
+  <rect class="ev" x="52" y="678" width="270" height="96" rx="10"/>
+  <text class="t" x="66" y="702">Test set</text>
+  <text class="s" x="66" y="722">85 questions, 20 of them</text>
+  <text class="s" x="66" y="740">unanswerable; gold evidence</text>
+  <text class="s" x="66" y="758">checked against the minutes</text>
+
+  <rect class="ev" x="354" y="678" width="270" height="96" rx="10"/>
+  <text class="t" x="368" y="702">Evaluations</text>
+  <text class="s" x="368" y="722">retrieval: hit@k, recall, MRR,</text>
+  <text class="s" x="368" y="740">latency; answers: deterministic</text>
+  <text class="s" x="368" y="758">grading, no model judge</text>
+
+  <rect class="ev" x="656" y="678" width="270" height="96" rx="10"/>
+  <text class="t" x="670" y="702">CI on every push</text>
+  <text class="s" x="670" y="722">lint and tests; hit@5 gate at 0.85</text>
+  <text class="s" x="670" y="740">on the committed index; browser</text>
+  <text class="s" x="670" y="758">parity; pgvector service tests</text>
+
+  <path class="arr" d="M322 726 H352" marker-end="url(#arrow)"/>
+  <path class="arr" d="M624 726 H654" marker-end="url(#arrow)"/>
+</svg>
