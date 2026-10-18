@@ -1,0 +1,517 @@
+/* Council Minutes Assistant demo. Neutral palette (no civic branding).
+   Contrast targets WCAG 2.1 AA: body text >= 7:1, secondary text >= 4.5:1,
+   interactive borders and focus rings >= 3:1, in both light and dark themes. */
+
+:root {
+  --bg: #f6f7f9;
+  --surface: #ffffff;
+  --text: #16191d;
+  --muted: #4a5260;
+  --border: #c9ced6;
+  --accent: #4b2a7b;
+  --accent-hover: #3a1f60;
+  --accent-text: #ffffff;
+  --accent-soft: #efe9f8;
+  --focus: #b45309;
+  --quote: #f2f0f6;
+  --notice-bg: #fff8e6;
+  --notice-border: #c58a00;
+  --ok: #1d6b3a;
+  --warn: #8a4b00;
+  --radius: 10px;
+  --shadow: 0 1px 2px rgba(16, 24, 40, 0.06), 0 1px 3px rgba(16, 24, 40, 0.08);
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #111316;
+    --surface: #1a1d22;
+    --text: #eef0f3;
+    --muted: #b4bac4;
+    --border: #4a505a;
+    --accent: #c9b6f2;
+    --accent-hover: #ddd0f8;
+    --accent-text: #17111f;
+    --accent-soft: #2a2236;
+    --focus: #fbbf24;
+    --quote: #22262d;
+    --notice-bg: #2a2416;
+    --notice-border: #c58a00;
+    --ok: #7fd49a;
+    --warn: #f3b562;
+    --shadow: none;
+    color-scheme: dark;
+  }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 400 1rem/1.55 system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+.wrap {
+  max-width: 920px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+a {
+  color: var(--accent);
+  text-underline-offset: 2px;
+}
+
+a:hover {
+  color: var(--accent-hover);
+}
+
+:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.skip-link {
+  position: absolute;
+  left: 16px;
+  top: -60px;
+  background: var(--surface);
+  color: var(--text);
+  padding: 8px 14px;
+  border: 2px solid var(--focus);
+  border-radius: 6px;
+  z-index: 10;
+}
+
+.skip-link:focus {
+  top: 12px;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Header and notice ------------------------------------------------------ */
+
+.site-header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 28px 0 22px;
+}
+
+.eyebrow {
+  margin: 0 0 4px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+h1 {
+  margin: 0;
+  font-size: clamp(1.6rem, 1.2rem + 1.6vw, 2.2rem);
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+
+.lede {
+  margin: 10px 0 0;
+  color: var(--muted);
+  max-width: 62ch;
+}
+
+.notice {
+  background: var(--notice-bg);
+  border-bottom: 1px solid var(--notice-border);
+  font-size: 0.9375rem;
+}
+
+.notice p {
+  margin: 0;
+  padding: 10px 0 0;
+}
+
+.notice .coverage {
+  padding: 6px 0 12px;
+}
+
+.notice .label {
+  font-weight: 600;
+}
+
+/* Panels and search form ------------------------------------------------- */
+
+main {
+  padding-top: 24px;
+  padding-bottom: 48px;
+}
+
+main:focus {
+  outline: none;
+}
+
+h2 {
+  font-size: 1.25rem;
+  line-height: 1.3;
+  margin: 0 0 12px;
+}
+
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 20px;
+}
+
+.field-label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.search-row {
+  display: flex;
+  gap: 8px;
+}
+
+input,
+select,
+button {
+  font: inherit;
+  color: inherit;
+}
+
+input[type="search"],
+input[type="date"],
+select {
+  width: 100%;
+  min-height: 44px;
+  padding: 8px 12px;
+  background: var(--surface);
+  border: 1px solid var(--muted);
+  border-radius: 8px;
+}
+
+input[type="search"] {
+  flex: 1;
+  min-width: 0;
+  font-size: 1.0625rem;
+}
+
+button {
+  min-height: 44px;
+  padding: 8px 18px;
+  border-radius: 8px;
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: var(--accent-text);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+button:hover {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
+
+button.secondary {
+  background: transparent;
+  color: var(--accent);
+}
+
+button.secondary:hover {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.hint {
+  margin: 8px 0 0;
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+
+.filters {
+  border: 0;
+  padding: 0;
+  margin: 16px 0 0;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+.filters legend {
+  font-weight: 600;
+  padding: 0;
+  margin-bottom: 8px;
+}
+
+.field label {
+  display: block;
+  font-size: 0.875rem;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+
+.field-actions {
+  display: flex;
+  align-items: flex-end;
+}
+
+@media (min-width: 720px) {
+  .filters {
+    grid-template-columns: 1fr 1fr 1.4fr auto;
+    align-items: end;
+  }
+}
+
+.examples {
+  margin-top: 16px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.examples-label {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+
+.examples ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chip {
+  min-height: 36px;
+  padding: 4px 12px;
+  font-weight: 500;
+  font-size: 0.875rem;
+  background: var(--accent-soft);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+}
+
+.chip:hover {
+  background: var(--accent-soft);
+  color: var(--text);
+  border-color: var(--accent);
+}
+
+.status {
+  margin: 16px 0 0;
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+
+.status.ok {
+  color: var(--ok);
+}
+
+.status.warn {
+  color: var(--warn);
+}
+
+.progress {
+  margin-top: 8px;
+  height: 6px;
+  background: var(--quote);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.progress-bar {
+  height: 100%;
+  width: 0;
+  background: var(--accent);
+  transition: width 0.2s ease;
+}
+
+/* Results ------------------------------------------------------------- */
+
+.results-section {
+  margin-top: 28px;
+}
+
+.results-summary {
+  margin: 0 0 12px;
+  color: var(--muted);
+}
+
+.results {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+}
+
+.result {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 16px 18px;
+}
+
+.result-meta {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+
+.result h3 {
+  margin: 4px 0 2px;
+  font-size: 1.0625rem;
+  line-height: 1.35;
+}
+
+.result .ref {
+  color: var(--muted);
+  font-weight: 600;
+  margin-right: 6px;
+}
+
+.result-path {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+.excerpt {
+  margin: 10px 0;
+  padding: 10px 14px;
+  background: var(--quote);
+  border-left: 4px solid var(--accent);
+  border-radius: 0 6px 6px 0;
+  overflow-wrap: anywhere;
+}
+
+.result-links {
+  margin: 4px 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  font-size: 0.9375rem;
+}
+
+.result-why {
+  margin: -4px 0 10px;
+  font-size: 0.8125rem;
+  color: var(--muted);
+}
+
+/* Showcase answers ------------------------------------------------------ */
+
+.showcase {
+  margin-top: 32px;
+}
+
+.showcase-label {
+  margin: 0 0 12px;
+  color: var(--muted);
+  font-size: 0.9375rem;
+}
+
+.qa {
+  border-top: 1px solid var(--border);
+  padding-top: 14px;
+  margin-top: 14px;
+}
+
+.qa h3 {
+  font-size: 1rem;
+  margin: 0 0 6px;
+}
+
+.qa .answer {
+  margin: 0 0 8px;
+}
+
+.qa .not-found {
+  color: var(--muted);
+  font-style: italic;
+}
+
+.qa ol {
+  margin: 0;
+  padding-left: 1.4em;
+  font-size: 0.9375rem;
+}
+
+.qa li {
+  margin: 4px 0;
+}
+
+/* How it works and footer ------------------------------------------------ */
+
+.how {
+  margin-top: 32px;
+}
+
+.how ul {
+  padding-left: 1.2em;
+  margin: 0;
+}
+
+.how li {
+  margin: 8px 0;
+}
+
+.site-footer {
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+  padding: 18px 0 28px;
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+
+.site-footer p {
+  margin: 6px 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .search-row {
+    flex-direction: column;
+  }
+
+  .search-row button {
+    width: 100%;
+  }
+}

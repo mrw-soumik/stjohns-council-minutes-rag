@@ -65,7 +65,15 @@ def test_excerpt_prefers_motion_and_result(synthetic_minutes: Minutes) -> None:
     chunk = next(c for c in chunk_minutes(synthetic_minutes) if c.item_ref == "3.1")
     excerpt = make_excerpt(chunk)
     assert excerpt.startswith("That Council approve the Discretionary Use application")
-    assert excerpt.endswith("MOTION LOST (1 to 3)")
+    assert excerpt.endswith(
+        "MOTION LOST (1 to 3). Against (3): Mayor Example, Councillor Placeholder, and "
+        "Councillor Fictional"
+    )
+    unanimous = next(c for c in chunk_minutes(synthetic_minutes) if c.item_ref == "2.1")
+    assert (
+        make_excerpt(unanimous)
+        == "That the Agenda be adopted as presented. MOTION CARRIED (4 to 0)"
+    )
 
 
 def test_excerpt_never_exceeds_limit(synthetic_minutes: Minutes) -> None:

@@ -1,0 +1,40 @@
+{
+ "base": "http://127.0.0.1:53060/",
+ "chrome": "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+ "console": [],
+ "pageErrors": [],
+ "checks": {
+  "model_loaded": true,
+  "keyboard": {
+   "first_tab": "skip-link",
+   "after_skip_link": "main"
+  },
+  "search_ms": [
+   33,
+   30,
+   36,
+   30,
+   29
+  ],
+  "browser_vs_node_q8_cosine": {
+   "min": 0.9987348245595923,
+   "mean": 0.9997208816367004
+  },
+  "axe_desktop_light": {
+   "violations": [],
+   "passes": 25,
+   "incomplete": []
+  },
+  "axe_desktop_dark": {
+   "violations": [],
+   "passes": 25,
+   "incomplete": []
+  },
+  "mobile_horizontal_overflow": false,
+  "axe_mobile_light": {
+   "violations": [],
+   "passes": 25,
+   "incomplete": []
+  }
+ }
+}

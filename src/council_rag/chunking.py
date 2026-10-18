@@ -185,28 +185,45 @@ def chunk_minutes(minutes: Minutes, config: ChunkingConfig | None = None) -> lis
     return chunks
 
 
-EXCERPT_MAX_CHARS = 300
+EXCERPT_MAX_CHARS = 300  # hard cap for any published passage (project brief)
+EXCERPT_NOTE_CHARS = 160  # discussion notes and attendance get a shorter teaser
 
 
-def make_excerpt(chunk: Chunk, max_chars: int = EXCERPT_MAX_CHARS) -> str:
-    """A short, quotable excerpt of a chunk (FR-05; the public demo shows nothing longer).
-
-    Motion chunks show the motion wording and its recorded result, which is usually
-    the decision a reader is looking for; other chunks show their opening text. The
-    item heading is left out because it is displayed separately.
-    """
-    lines = chunk.text.split("\n")
-    body = lines[1:] if chunk.kind == "item" and len(lines) > 1 else lines
-    motion = next((line for line in body if line.startswith("That ")), None)
-    if motion is not None:
-        result = next((line for line in body if _RESULT_RE.match(line)), "")
-        text = f"{motion} {result}".strip()
-    else:
-        text = " ".join(body)
+def _truncate(text: str, limit: int) -> str:
     text = " ".join(text.split())
-    if len(text) <= max_chars:
+    if len(text) <= limit:
         return text
-    cut = text[: max_chars - 1]
+    cut = text[: max(limit - 1, 0)]
     if " " in cut[-40:]:
         cut = cut[: cut.rfind(" ")]
     return cut.rstrip(" ,;:") + "\u2026"
+
+
+def make_excerpt(
+    chunk: Chunk, max_chars: int = EXCERPT_MAX_CHARS, note_chars: int = EXCERPT_NOTE_CHARS
+) -> str:
+    """A short, quotable excerpt of a chunk (FR-05; the public demo shows nothing longer).
+
+    Chunks that record a decision show the motion wording followed by its recorded result
+    (the result is never truncated away). Other chunks (discussion notes, attendance) show
+    a shorter opening teaser. The item heading is left out because it is shown separately.
+    """
+    lines = chunk.text.split("\n")
+    body = lines[1:] if chunk.kind == "item" and len(lines) > 1 else lines
+    motion: str | None = None
+    for i, line in enumerate(body):
+        if line.startswith("Seconded By") and i + 1 < len(body):
+            motion = body[i + 1]
+            break
+    if motion is None:
+        motion = next((line for line in body if line.startswith("That ")), None)
+    if motion is not None:
+        start = body.index(motion)
+        result = next((line for line in body[start:] if _RESULT_RE.match(line)), "")
+        against = next((line for line in body[start:] if line.startswith("Against (")), "")
+        tail = result
+        if against:  # who voted against is often the point of a question; keep it short
+            tail = f"{result}. {_truncate(against, 110)}" if result else _truncate(against, 110)
+        budget = max_chars - (len(tail) + 1 if tail else 0)
+        return f"{_truncate(motion, budget)} {tail}".strip()
+    return _truncate(" ".join(body), min(max_chars, note_chars))

@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en-CA">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Council Minutes Assistant (search demo)</title>
+  <meta name="description" content="Search decisions recorded in City of St. John's Regular Council Meeting minutes. Independent portfolio project; every result links to the official record.">
+  <meta name="color-scheme" content="light dark">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="assets/style.css">
+  <script type="module" src="assets/app.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to main content</a>
+
+  <header class="site-header">
+    <div class="wrap">
+      <p class="eyebrow">Portfolio demo</p>
+      <h1>St. John's Council Minutes Assistant</h1>
+      <p class="lede">Search the decisions recorded in the City of St. John's Regular Council Meeting minutes. Every result links to the official record.</p>
+    </div>
+  </header>
+
+  <div class="notice" role="note" aria-label="About this site">
+    <div class="wrap">
+      <p><strong>Independent portfolio project.</strong> Not affiliated with or endorsed by the City of St. John's. Source documents are &copy; City of St. John's and are retrieved from the City's public meetings portal; this repository does not redistribute them. Results show short excerpts only; check the official minutes before relying on anything here.</p>
+      <p class="coverage"><span class="label">Coverage:</span> <span id="coverage-text">loading&hellip;</span></p>
+    </div>
+  </div>
+
+  <main id="main" class="wrap" tabindex="-1">
+    <section class="panel search-panel" aria-labelledby="search-heading">
+      <h2 id="search-heading">Search the minutes</h2>
+      <form id="search-form" role="search" novalidate>
+        <label for="q" class="field-label">What are you looking for?</label>
+        <div class="search-row">
+          <input id="q" name="q" type="search" autocomplete="off" spellcheck="true" maxlength="300" aria-describedby="q-hint" placeholder="e.g. heritage designation on Water Street">
+          <button type="submit" id="search-button">Search</button>
+        </div>
+        <p id="q-hint" class="hint">Plain language works, and so do exact terms such as an address, a by-law number or a file number.</p>
+
+        <fieldset class="filters">
+          <legend>Options</legend>
+          <div class="field">
+            <label for="from">Meetings from</label>
+            <input type="date" id="from" name="from">
+          </div>
+          <div class="field">
+            <label for="to">Meetings to</label>
+            <input type="date" id="to" name="to">
+          </div>
+          <div class="field">
+            <label for="mode">Search method</label>
+            <select id="mode" name="mode">
+              <option value="hybrid">Hybrid (keywords and meaning)</option>
+              <option value="bm25">Keywords only</option>
+              <option value="dense">Meaning only</option>
+            </select>
+          </div>
+          <div class="field field-actions">
+            <button type="button" id="clear" class="secondary">Clear</button>
+          </div>
+        </fieldset>
+      </form>
+
+      <div class="examples">
+        <p id="examples-label" class="examples-label">Examples:</p>
+        <ul aria-labelledby="examples-label">
+          <li><button type="button" class="chip" data-q="Who voted against the 2026 budget?">Who voted against the 2026 budget?</button></li>
+          <li><button type="button" class="chip" data-q="heritage designation 157-163 Water Street">Heritage designation, 157-163 Water Street</button></li>
+          <li><button type="button" class="chip" data-q="Did the City change the name of its June holiday?">Renaming the June holiday</button></li>
+          <li><button type="button" class="chip" data-q="Tely 10 road closures">Tely 10 road closures</button></li>
+          <li><button type="button" class="chip" data-q="parking relief for a subsidiary dwelling unit">Parking relief for a subsidiary unit</button></li>
+        </ul>
+      </div>
+
+      <p id="model-status" class="status" role="status" aria-live="polite">Preparing search&hellip;</p>
+      <div class="progress" id="model-progress" hidden>
+        <div class="progress-bar" id="model-progress-bar"></div>
+      </div>
+    </section>
+
+    <section class="results-section" aria-labelledby="results-heading">
+      <h2 id="results-heading">Results</h2>
+      <p id="results-summary" class="results-summary" role="status" aria-live="polite">Enter a search to see matching passages from the minutes.</p>
+      <ol id="results" class="results"></ol>
+    </section>
+
+    <section id="showcase" class="panel showcase" aria-labelledby="showcase-heading">
+      <h2 id="showcase-heading">Example answers</h2>
+      <p id="showcase-label" class="showcase-label">Precomputed answers with citations will appear here once the answer-quality evaluation (Phase 2) is complete.</p>
+      <div id="showcase-list"></div>
+    </section>
+
+    <section class="how" aria-labelledby="how-heading">
+      <h2 id="how-heading">How this works</h2>
+      <ul>
+        <li><strong>Hybrid search.</strong> Keyword matching (BM25) finds exact terms such as addresses and by-law numbers; a small embedding model (<span id="embed-model">BAAI bge-small-en-v1.5</span>) finds passages with the same meaning in different words. The two rankings are merged with reciprocal rank fusion.</li>
+        <li><strong>Runs in your browser.</strong> The page downloads the search model once (about 34&nbsp;MB, then cached) and a compact index. Your searches are processed on your device and are not sent anywhere.</li>
+        <li><strong>Traceable.</strong> Each result names the meeting, date and agenda item and links to that item in the official minutes.</li>
+        <li><strong>Measured.</strong> On a 65-question test set, the correct passage is in the top five results for 95% of answerable questions (target: 85%). See the project README for methods and limitations.</li>
+      </ul>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <p>Built by Mostafa Rafiur Wasib. <a href="https://github.com/mrw-soumik/stjohns-council-minutes-rag">Source code and evaluation</a> &middot; <a href="https://github.com/mrw-soumik/business-analysis-council-minutes-search">Business analysis</a></p>
+      <p>Privacy: no accounts, cookies or analytics. Searches stay in your browser. Code is served from GitHub Pages and jsDelivr; the model files come from Hugging Face.</p>
+    </div>
+  </footer>
+</body>
+</html>

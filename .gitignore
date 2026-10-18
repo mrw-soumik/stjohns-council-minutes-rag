@@ -1,10 +1,10 @@
 # City of St. John's source documents and anything derived from their full text.
 # These are copyright the City of St. John's and must never be committed.
-data/
+/data/
 
 # Local caches (embedding model downloads, Postgres binaries, scratch)
 .cache/
-models/
+/models/
 
 # Python
 .venv/
@@ -22,7 +22,7 @@ dist/
 node_modules/
 
 # Usage logs may contain timing data from local runs; keep them out of git
-logs/
+/logs/
 
 # OS / editor
 .DS_Store

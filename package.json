@@ -1,0 +1,16 @@
+{
+  "name": "stjohns-council-minutes-rag-tools",
+  "private": true,
+  "type": "module",
+  "description": "Project-local tooling: embedding parity check, browser search parity check and demo screenshots.",
+  "scripts": {
+    "parity:embeddings": "node scripts/embedding_parity.mjs",
+    "parity:search": "node scripts/check_search_parity.mjs",
+    "screenshots": "node scripts/screenshots.mjs"
+  },
+  "devDependencies": {
+    "@huggingface/transformers": "4.3.0",
+    "axe-core": "4.13.0",
+    "puppeteer-core": "25.12.0"
+  }
+}
