@@ -29,7 +29,7 @@ from typing import Any
 
 import numpy as np
 
-from council_rag.chunking import EXCERPT_MAX_CHARS, make_excerpt
+from council_rag.chunking import EXCERPT_MAX_CHARS, excerpt_for
 from council_rag.config import QUERY_INSTRUCTION
 from council_rag.index import load_index
 from council_rag.retrieval import rrf_fuse
@@ -87,21 +87,30 @@ def export_demo(index_dir: Path, out_dir: Path) -> dict[str, Any]:
 
     rows = []
     for c in chunks:
-        excerpt = make_excerpt(c)
-        if len(excerpt) > EXCERPT_MAX_CHARS:  # defensive: never publish longer passages
-            raise ValueError(f"excerpt for {c.chunk_id} exceeds {EXCERPT_MAX_CHARS} chars")
-        rows.append(
-            {
-                "id": c.chunk_id,
-                "m": meeting_pos[c.meeting_id],
-                "ref": c.item_ref,
-                "title": c.item_title,
-                "path": " > ".join(c.item_path),
-                "anchor": c.item_anchor,
-                "kind": c.kind,
-                "excerpt": excerpt,
-            }
-        )
+        ex = excerpt_for(c)
+        shown = len(ex.text) + (len(ex.result) + 1 if ex.result else 0)
+        # PA-13: never publish more than 300 characters per passage, always verbatim
+        if (
+            shown > EXCERPT_MAX_CHARS
+            or ex.text not in c.text
+            or (ex.result and ex.result not in c.text)
+        ):
+            raise ValueError(f"excerpt for {c.chunk_id} is too long or not verbatim")
+        row = {
+            "id": c.chunk_id,
+            "m": meeting_pos[c.meeting_id],
+            "ref": c.item_ref,
+            "title": c.item_title,
+            "path": " > ".join(c.item_path),
+            "anchor": c.item_anchor,
+            "kind": c.kind,
+            "excerpt": ex.text,
+        }
+        if ex.cut:
+            row["cut"] = True
+        if ex.result:
+            row["result"] = ex.result
+        rows.append(row)
 
     # --- vectors -------------------------------------------------------------------
     q, scales = quantize_int8(embeddings.astype(np.float32))

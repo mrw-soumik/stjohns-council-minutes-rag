@@ -116,6 +116,24 @@ try {
   await desk.waitForFunction(() => document.querySelectorAll("#results li").length > 0);
   report.checks.keyboard = { first_tab: firstFocus, after_skip_link: afterSkip };
 
+  // PA-06: time from navigation start until keyword search and the model are ready
+  report.checks.timings_ms = await desk.evaluate(() => window.__demo.timings);
+
+  // PA-10: disclaimer, independence notice, coverage dates and model names are visible
+  const visible = await desk.evaluate(() => document.body.innerText);
+  const meta = JSON.parse(await readFile("docs/data/index.json", "utf8"));
+  const showcase = JSON.parse(await readFile("docs/data/showcase.json", "utf8"));
+  const longDate = (iso) =>
+    new Date(`${iso}T12:00:00`).toLocaleDateString("en-CA", { year: "numeric", month: "long", day: "numeric" });
+  report.checks.ui_notices = {
+    independence_notice: visible.includes("Independent portfolio project"),
+    disclaimer: visible.includes("Not affiliated with or endorsed by the City of St. John's"),
+    coverage_dates:
+      visible.includes(longDate(meta.coverage.from)) && visible.includes(longDate(meta.coverage.to)),
+    search_model_name: visible.includes("bge-small-en-v1.5"),
+    answer_model_name: showcase.model ? visible.includes(showcase.model) : "no showcase yet",
+  };
+
   // timing: hybrid searches after the model has loaded (embedding + ranking)
   const timings = [];
   for (const q of [
@@ -193,5 +211,6 @@ console.log(JSON.stringify(report, null, 1));
 const failed =
   report.pageErrors.length > 0 ||
   report.console.some((c) => c.type === "error") ||
-  Object.entries(report.checks).some(([k, v]) => k.startsWith("axe_") && v.violations.length > 0);
+  Object.entries(report.checks).some(([k, v]) => k.startsWith("axe_") && v.violations.length > 0) ||
+  Object.values(report.checks.ui_notices ?? {}).some((v) => v === false);
 process.exit(failed ? 1 : 0);

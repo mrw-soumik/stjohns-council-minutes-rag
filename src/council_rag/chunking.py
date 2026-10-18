@@ -185,45 +185,82 @@ def chunk_minutes(minutes: Minutes, config: ChunkingConfig | None = None) -> lis
     return chunks
 
 
-EXCERPT_MAX_CHARS = 300  # hard cap for any published passage (project brief)
+EXCERPT_MAX_CHARS = 300  # hard cap for any published passage (project brief, PA-13)
 EXCERPT_NOTE_CHARS = 160  # discussion notes and attendance get a shorter teaser
+EXCERPT_FULL_SPAN_CHARS = 220  # show motion, votes and result together only when this short
 
 
-def _truncate(text: str, limit: int) -> str:
-    text = " ".join(text.split())
-    if len(text) <= limit:
-        return text
-    cut = text[: max(limit - 1, 0)]
-    if " " in cut[-40:]:
-        cut = cut[: cut.rfind(" ")]
-    return cut.rstrip(" ,;:") + "\u2026"
+@dataclass(frozen=True)
+class Excerpt:
+    """A verbatim span of a chunk's text (``text in chunk.text`` always holds).
 
-
-def make_excerpt(
-    chunk: Chunk, max_chars: int = EXCERPT_MAX_CHARS, note_chars: int = EXCERPT_NOTE_CHARS
-) -> str:
-    """A short, quotable excerpt of a chunk (FR-05; the public demo shows nothing longer).
-
-    Chunks that record a decision show the motion wording followed by its recorded result
-    (the result is never truncated away). Other chunks (discussion notes, attendance) show
-    a shorter opening teaser. The item heading is left out because it is shown separately.
+    ``cut`` is true when the passage continues after the span (the UI adds an ellipsis);
+    ``result`` is the verbatim outcome line of the motion shown ("MOTION CARRIED (10 to 1)")
+    when it did not fit inside the span.
     """
-    lines = chunk.text.split("\n")
-    body = lines[1:] if chunk.kind == "item" and len(lines) > 1 else lines
-    motion: str | None = None
-    for i, line in enumerate(body):
-        if line.startswith("Seconded By") and i + 1 < len(body):
-            motion = body[i + 1]
+
+    text: str
+    cut: bool
+    result: str | None = None
+
+
+def _prefix(text: str, start: int, limit: int, end: int | None = None) -> tuple[str, bool]:
+    """Verbatim span from ``start`` of at most ``limit`` characters, cut at a word boundary."""
+    stop = len(text) if end is None else end
+    if stop - start <= limit:
+        return text[start:stop].rstrip(), stop < len(text.rstrip())
+    window = text[start : start + limit]
+    cut_at = max(window.rfind(" "), window.rfind("\n"))
+    if cut_at > limit // 2:
+        window = window[:cut_at]
+    return window.rstrip(" ,;:\n"), True
+
+
+def excerpt_for(
+    chunk: Chunk, max_chars: int = EXCERPT_MAX_CHARS, note_chars: int = EXCERPT_NOTE_CHARS
+) -> Excerpt:
+    """Choose the short, quotable excerpt for a chunk (FR-05, PA-13).
+
+    Decisions show the motion wording, continuing through the recorded votes and result
+    when that whole span is short; otherwise the motion wording alone, with the result
+    line kept separately. Other chunks show an opening teaser. The item heading is left
+    out because it is displayed separately. Every span is an exact substring.
+    """
+    text = chunk.text
+    lines = text.split("\n")
+    offsets, pos = [], 0
+    for line in lines:
+        offsets.append(pos)
+        pos += len(line) + 1
+    first = 1 if chunk.kind == "item" and len(lines) > 1 else 0
+    motion_idx = None
+    for i in range(first, len(lines)):
+        if lines[i].startswith("Seconded By") and i + 1 < len(lines):
+            motion_idx = i + 1
             break
-    if motion is None:
-        motion = next((line for line in body if line.startswith("That ")), None)
-    if motion is not None:
-        start = body.index(motion)
-        result = next((line for line in body[start:] if _RESULT_RE.match(line)), "")
-        against = next((line for line in body[start:] if line.startswith("Against (")), "")
-        tail = result
-        if against:  # who voted against is often the point of a question; keep it short
-            tail = f"{result}. {_truncate(against, 110)}" if result else _truncate(against, 110)
-        budget = max_chars - (len(tail) + 1 if tail else 0)
-        return f"{_truncate(motion, budget)} {tail}".strip()
-    return _truncate(" ".join(body), min(max_chars, note_chars))
+    if motion_idx is None:
+        motion_idx = next(
+            (i for i in range(first, len(lines)) if lines[i].startswith("That ")), None
+        )
+    if motion_idx is None:
+        span, cut = _prefix(text, offsets[first], min(max_chars, note_chars))
+        return Excerpt(span, cut)
+    m_start = offsets[motion_idx]
+    r_idx = next((i for i in range(motion_idx, len(lines)) if _RESULT_RE.match(lines[i])), None)
+    if r_idx is not None:
+        r_end = offsets[r_idx] + len(lines[r_idx])
+        if r_end - m_start <= min(max_chars, EXCERPT_FULL_SPAN_CHARS):  # short: show it all
+            return Excerpt(text[m_start:r_end], r_end < len(text.rstrip()))
+        # Too long to show whole: the motion wording only (no vote lists), then the result.
+        result = lines[r_idx]
+        m_end = m_start + len(lines[motion_idx])
+        span, _ = _prefix(text, m_start, max_chars - len(result) - 1, m_end)
+        return Excerpt(span, True, result)
+    m_end = m_start + len(lines[motion_idx])
+    span, _ = _prefix(text, m_start, max_chars, m_end)
+    return Excerpt(span, True)
+
+
+def make_excerpt(chunk: Chunk, max_chars: int = EXCERPT_MAX_CHARS) -> str:
+    """The verbatim excerpt text only (used by the API and the answer backends)."""
+    return excerpt_for(chunk, max_chars).text

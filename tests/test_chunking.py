@@ -3,6 +3,7 @@ from council_rag.chunking import (
     Chunk,
     ChunkingConfig,
     chunk_minutes,
+    excerpt_for,
     long_date,
     make_excerpt,
 )
@@ -61,29 +62,39 @@ def test_options_drop_notes_and_attendance(synthetic_minutes: Minutes) -> None:
     assert [c.item_ref for c in chunks] == ["2.1", "3.1", "4.1.1", "5.1"]
 
 
-def test_excerpt_prefers_motion_and_result(synthetic_minutes: Minutes) -> None:
+def test_excerpt_shows_short_motion_with_votes_verbatim(synthetic_minutes: Minutes) -> None:
     chunk = next(c for c in chunk_minutes(synthetic_minutes) if c.item_ref == "3.1")
-    excerpt = make_excerpt(chunk)
-    assert excerpt.startswith("That Council approve the Discretionary Use application")
-    assert excerpt.endswith(
-        "MOTION LOST (1 to 3). Against (3): Mayor Example, Councillor Placeholder, and "
-        "Councillor Fictional"
-    )
-    unanimous = next(c for c in chunk_minutes(synthetic_minutes) if c.item_ref == "2.1")
-    assert (
-        make_excerpt(unanimous)
-        == "That the Agenda be adopted as presented. MOTION CARRIED (4 to 0)"
-    )
+    ex = excerpt_for(chunk)
+    assert ex.text in chunk.text  # PA-13: verbatim
+    assert ex.text.startswith("That Council approve the Discretionary Use application")
+    assert ex.text.endswith("MOTION LOST (1 to 3)") or ex.result == "MOTION LOST (1 to 3)"
 
 
-def test_excerpt_never_exceeds_limit(synthetic_minutes: Minutes) -> None:
+def test_long_motion_keeps_result_separately(synthetic_minutes: Minutes) -> None:
+    chunk = next(c for c in chunk_minutes(synthetic_minutes) if c.item_ref == "4.1.1")
+    ex = excerpt_for(chunk, max_chars=120)
+    assert ex.text in chunk.text and ex.cut
+    assert ex.result == "MOTION CARRIED (4 to 0)"
+    assert len(ex.text) + len(ex.result) + 1 <= 120
+    assert "For (4)" not in ex.text  # vote lists are not used to fill a cut excerpt
+
+
+def test_every_excerpt_is_verbatim_and_short(synthetic_minutes: Minutes) -> None:
     for chunk in chunk_minutes(synthetic_minutes):
-        assert len(make_excerpt(chunk)) <= EXCERPT_MAX_CHARS
+        ex = excerpt_for(chunk)
+        shown = len(ex.text) + (len(ex.result) + 1 if ex.result else 0)
+        assert shown <= EXCERPT_MAX_CHARS
+        assert ex.text in chunk.text and (ex.result is None or ex.result in chunk.text)
+        assert make_excerpt(chunk) == ex.text
     long = Chunk.from_json(
-        {**chunk_minutes(synthetic_minutes)[0].to_json(), "text": "word " * 400, "kind": "item"}
+        {
+            **chunk_minutes(synthetic_minutes)[0].to_json(),
+            "text": "heading\n" + "word " * 400,
+            "kind": "item",
+        }
     )
-    out = make_excerpt(long)
-    assert len(out) <= EXCERPT_MAX_CHARS and out.endswith("\u2026")
+    ex = excerpt_for(long)
+    assert ex.cut and len(ex.text) <= EXCERPT_MAX_CHARS and ex.text in long.text
 
 
 def test_long_date_is_portable() -> None:

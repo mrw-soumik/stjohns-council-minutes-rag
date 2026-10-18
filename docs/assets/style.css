@@ -416,6 +416,16 @@ button.secondary:hover {
   overflow-wrap: anywhere;
 }
 
+.excerpt {
+  white-space: pre-line;
+}
+
+.result-outcome {
+  margin: -4px 0 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
 .result-links {
   margin: 4px 0 0;
   display: flex;
@@ -455,6 +465,12 @@ button.secondary:hover {
 
 .qa .answer {
   margin: 0 0 8px;
+}
+
+.qa .grade {
+  margin: 0 0 6px;
+  font-size: 0.8125rem;
+  color: var(--muted);
 }
 
 .qa .not-found {

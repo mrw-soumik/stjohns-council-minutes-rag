@@ -211,7 +211,10 @@ function render(hits, query, mode, ms, note) {
     );
     for (const hit of group) {
       const part = state.index.chunks[hit.idx];
-      article.append(el("blockquote", { class: "excerpt", cite: itemUrl || null }, part.excerpt));
+      const quote = el("blockquote", { class: "excerpt", cite: itemUrl || null }, part.excerpt);
+      if (part.cut) quote.append(el("span", { class: "more", "aria-label": "excerpt continues" }, " \u2026"));
+      article.append(quote);
+      if (part.result) article.append(el("p", { class: "result-outcome" }, `Recorded result: ${part.result}`));
       const why = [];
       if (hit.bm25Rank) why.push(`keyword rank ${hit.bm25Rank}`);
       if (hit.denseRank) why.push(`meaning rank ${hit.denseRank}`);
@@ -254,6 +257,16 @@ async function loadShowcase() {
     } else {
       block.append(el("p", { class: "answer not-found" }, item.answer));
     }
+    if (typeof item.graded_correct === "boolean") {
+      block.append(
+        el(
+          "p",
+          { class: "grade" },
+          `Evaluation grade: ${item.graded_correct ? "correct" : "not correct"} ` +
+            "(checked automatically against the test set).",
+        ),
+      );
+    }
     els.showcaseList.append(block);
   }
 }
@@ -272,6 +285,7 @@ async function init() {
     setStatus(`The search index could not be loaded (${error.message}).`, "warn");
     return;
   }
+  window.__demo.timings.indexReadyMs = Math.round(performance.now());
   const cov = state.index.meta.coverage;
   els.coverage.textContent =
     `${cov.meetings} Regular Council Meetings, ${longDate(cov.from)} to ${longDate(cov.to)} ` +
@@ -311,9 +325,13 @@ async function init() {
     .then((embed) => {
       state.embed = embed;
       state.modelState = "ready";
+      window.__demo.timings.modelReadyMs = Math.round(performance.now());
       window.__demo.embed = (text) => embed(text).then((v) => Array.from(v));
       els.progress.hidden = true;
-      setStatus("Ready: hybrid search (keywords and meaning) runs in your browser.", "ok");
+      setStatus(
+        `Ready: hybrid search with ${MODEL_ID.split("/").pop()} (keywords and meaning) runs in your browser.`,
+        "ok",
+      );
       if (state.lastSearchDegraded && els.q.value.trim()) runSearch({ updateUrl: false });
       return true;
     })
@@ -331,5 +349,5 @@ async function init() {
 }
 
 // Hooks for the automated browser check (scripts/screenshots.mjs).
-window.__demo = { ready: null, modelReady: null, lastSearchMs: null };
+window.__demo = { ready: null, modelReady: null, lastSearchMs: null, timings: {} };
 window.__demo.ready = init();

@@ -361,19 +361,45 @@ def sync_minutes(
         )
 
     report.requests_made = client.requests_made
+    dates = sorted(e["meeting_date"] for e in entries)
+    coverage = {
+        "from": dates[0] if dates else None,
+        "to": dates[-1] if dates else None,
+        "meetings": len(entries),
+    }
+    now = datetime.now(UTC).isoformat(timespec="seconds")
     _write_json(
         paths.manifest,
         {
-            "generated_at": datetime.now(UTC).isoformat(timespec="seconds"),
+            "generated_at": now,
             "source": client.base_url,
             "meeting_name": MEETING_NAME,
             "date_range": [start.isoformat(), end.isoformat()],
+            "coverage": coverage,
             "documents": entries,
             "skipped": report.skipped,
             "out_of_scope_meetings": len(report.out_of_scope),
             "pdf_blocked": report.pdf_blocked,
         },
     )
+    # One line per run (FR-07, PA-14): what changed and the resulting coverage.
+    paths.logs.mkdir(parents=True, exist_ok=True)
+    with (paths.logs / "ingest.jsonl").open("a", encoding="utf-8") as fh:
+        fh.write(
+            json.dumps(
+                {
+                    "ts": now,
+                    "range": [start.isoformat(), end.isoformat()],
+                    "downloaded": [r.meeting_date for r in report.downloaded],
+                    "cached": len(report.cached),
+                    "skipped": len(report.skipped),
+                    "requests": report.requests_made,
+                    "pdf_blocked": bool(report.pdf_blocked),
+                    "coverage": coverage,
+                }
+            )
+            + "\n"
+        )
     return report
 
 

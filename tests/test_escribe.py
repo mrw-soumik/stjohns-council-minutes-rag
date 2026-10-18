@@ -139,3 +139,46 @@ def test_challenge_is_detected_and_not_retried(tmp_path) -> None:
         assert client.requests_made == 3  # pdf probe, calendar, one minutes page, then stop
     assert "bot challenge" in report.skipped[0]["reason"]
     assert report.downloaded == []
+
+
+def test_rerun_adds_new_minutes_without_duplicates_and_logs(tmp_path, synthetic_html) -> None:
+    """PA-14: a re-run fetches only what is new, keeps one entry per meeting, logs, and
+    extends coverage."""
+    newer = {
+        "ID": "55555555-aaaa-4000-8000-000000000005",
+        "MeetingName": "Regular Council Meeting",
+        "StartDate": "2024/04/02 15:00:00",
+        "Url": "https://example.invalid/m5",
+        "MeetingDocumentLink": [{"Title": "Minutes (HTML)", "Url": "/Meeting.aspx?Id=5"}],
+    }
+    calendar = {"d": CALENDAR}
+    requests: list[str] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        requests.append(request.url.path)
+        if request.url.path.endswith("GetCalendarMeetings"):
+            return httpx.Response(200, json=calendar)
+        return httpx.Response(200, text=synthetic_html)
+
+    paths = data_paths(tmp_path)
+    today = date(2024, 12, 31)
+    with _client(handler) as client:
+        sync_minutes(client, paths, date(2024, 1, 1), date(2024, 12, 31), today=today)
+    first = json.loads(paths.manifest.read_text())
+    assert first["coverage"] == {"from": "2024-03-04", "to": "2024-03-04", "meetings": 1}
+
+    calendar = {"d": [*CALENDAR, newer]}  # minutes for a later meeting are published
+    requests.clear()
+    with _client(handler) as client:
+        report = sync_minutes(
+            client, paths, date(2024, 1, 1), date(2024, 12, 31), refresh_calendar=True, today=today
+        )
+    assert [r.meeting_date for r in report.downloaded] == ["2024-04-02"]
+    assert requests == ["/MeetingsCalendarView.aspx/GetCalendarMeetings", "/Meeting.aspx"]
+    second = json.loads(paths.manifest.read_text())
+    ids = [d["meeting_id"] for d in second["documents"]]
+    assert len(ids) == len(set(ids)) == 2
+    assert second["coverage"] == {"from": "2024-03-04", "to": "2024-04-02", "meetings": 2}
+    log = [json.loads(line) for line in (paths.logs / "ingest.jsonl").read_text().splitlines()]
+    assert len(log) == 2 and log[1]["downloaded"] == ["2024-04-02"]
+    assert log[1]["coverage"]["to"] == "2024-04-02"
