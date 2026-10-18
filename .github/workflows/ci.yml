@@ -1,0 +1,102 @@
+name: CI
+
+# No job downloads City of St. John's documents. Tests use a synthetic minutes fixture;
+# the retrieval gate scores the committed browser index (docs/data: metadata, short
+# excerpts, int8 vectors, hashed term counts) against the committed relevance
+# judgements (eval/qrels.json).
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint-and-test:
+    name: Lint and unit tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.14"
+          cache: pip
+      - name: Install
+        run: python -m pip install -e ".[dev]"
+      - name: Ruff (lint)
+        run: ruff check src tests scripts
+      - name: Ruff (format)
+        run: ruff format --check src tests scripts
+      - name: Unit tests
+        run: pytest -q
+
+  retrieval-gate:
+    name: Retrieval quality gate (NFR-01) and browser parity
+    runs-on: ubuntu-latest
+    needs: lint-and-test
+    timeout-minutes: 20
+    env:
+      COUNCIL_RAG_MODEL_CACHE: ${{ github.workspace }}/.cache/models
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.14"
+          cache: pip
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+      - name: Cache the embedding model (pinned revision)
+        uses: actions/cache@v6
+        with:
+          path: .cache/models
+          key: bge-small-${{ hashFiles('src/council_rag/config.py') }}
+      - name: Install
+        run: python -m pip install -e .
+      - name: NFR-01 gate on the committed browser index
+        run: >
+          council-rag eval-retrieval --source demo --demo-modes bm25,dense,hybrid
+          --query-model onnx/model_quantized.onnx --tag ci_gate
+          --out "${{ runner.temp }}/results" --gate 0.85
+      - name: Browser search code ranks exactly like Python
+        run: python scripts/check_search_parity.py
+      - name: Demo scripts parse
+        run: node --check docs/assets/app.js && node --check docs/assets/search.js
+
+  pgvector:
+    name: pgvector integration
+    runs-on: ubuntu-latest
+    needs: lint-and-test
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: council_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      PGVECTOR_TEST_DSN: postgresql://postgres:postgres@localhost:5432/council_test
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.14"
+          cache: pip
+      - name: Install
+        run: python -m pip install -e ".[dev,pgvector]"
+      - name: Integration tests
+        run: pytest -q -m integration -rA

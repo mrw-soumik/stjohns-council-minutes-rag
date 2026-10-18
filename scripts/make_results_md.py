@@ -147,7 +147,8 @@ def main() -> None:
             f"{len(b['axe_mobile_light']['violations'])}.",
             f"- Keyboard: first Tab reaches `{b['keyboard']['first_tab']}`; the skip link moves "
             f"focus to `#{b['keyboard']['after_skip_link']}`.",
-            f"- Horizontal scrolling at 390 px: {'yes' if b['mobile_horizontal_overflow'] else 'no'}.",
+            "- Horizontal scrolling at 390 px: "
+            + ("yes." if b["mobile_horizontal_overflow"] else "no."),
             "",
         ]
     answers = load("answers_local")
