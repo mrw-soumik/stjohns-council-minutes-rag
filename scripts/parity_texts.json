@@ -1,0 +1,19 @@
+{
+  "note": "Sample texts written for the embedding parity check (not taken from City documents).",
+  "queries": [
+    "Did council approve the rezoning of a property on Water Street?",
+    "Who voted against the snow clearing by-law?",
+    "What did council decide about community gardens in 2024?",
+    "When was the noise by-law extension for film production approved?",
+    "How much was the tender for road resurfacing?",
+    "by-law 1736"
+  ],
+  "documents": [
+    "That Council approve the Discretionary Use application for a Home Occupation at 12 Example Street to allow a bicycle repair shop. MOTION CARRIED (9 to 0)",
+    "Regular Council Meeting, March 4, 2024 > 4 COMMITTEE REPORTS\n4.1.1 Snow Clearing By-Law Amendment\nThat Council adopt By-Law No. 9999. For (8): Mayor Example. Against (1): Councillor Sample. MOTION CARRIED (8 to 1)",
+    "Councillor Fictional gave an update on the community garden program. Twelve plots were added in the spring and the waiting list now has forty names.",
+    "That Council approve an extension to the Noise By-Law for overnight filming downtown from June 1 to June 5.",
+    "That Council award the open call for asphalt resurfacing to the lowest bidder meeting specifications in the amount of $1,250,000 (HST included).",
+    "Present: Mayor Alex Example; Deputy Mayor Bea Sample; Councillor Cam Placeholder. Regrets: Councillor Eli Invented."
+  ]
+}
