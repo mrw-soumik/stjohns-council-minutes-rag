@@ -9,7 +9,7 @@ to the official record, or an honest "not found in the minutes".
 **Live search demo:** https://mrw-soumik.github.io/stjohns-council-minutes-rag/ (runs entirely in
 your browser; nothing you type leaves your device)
 
-![Search demo: results for "Who voted against the 2026 budget?" grouped by agenda item, with excerpts and links to the official minutes](docs/screenshots/desktop.png)
+![Search demo: results for "Who voted against the 2026 budget?" grouped by agenda item, with motion excerpts, recorded results and links to the official minutes](docs/screenshots/desktop.png)
 
 > Independent portfolio project. Not affiliated with or endorsed by the City of St. John's.
 > Source documents are © City of St. John's and are retrieved from the City's public meetings
@@ -27,7 +27,7 @@ This is Project A of a three-part portfolio by Mostafa Rafiur Wasib. The
 | NFR-02 answers: citations that support the claim | at least 90% | **90.2%** cite the gold agenda item; 80.5% the exact gold passage (strict); 92.7% support a statement on read-through (82 citations) | Met at item level and on review; strict measure below |
 | NFR-02 answers: unanswerable questions declined | at least 80% | **100.0% (20 of 20)** | Met |
 | NFR-03 answer time, p95 (local model on an Apple M3 Pro) | under 10 s | **12.82 s** (k = 6); 10.96 s (k = 4) | Not met |
-| NFR-03 demo search time after the page loads | under 1 s | **31 to 42 ms** per search | Met |
+| NFR-03 demo search time after the page loads | under 1 s | **28 to 35 ms** per search | Met |
 | NFR-04 cost per answer | under CAD 0.05 | **$0** (local model) | Met |
 | NFR-05 accessibility (axe-core, WCAG 2.1 A and AA rules) | no violations | **0** in light, dark and 390 px views | Met |
 
@@ -69,7 +69,7 @@ to reproduce them are in [`eval/README.md`](eval/README.md).
    mocked responses and was never called for this project.
 6. **Browser demo (FR-05, NFR-03, NFR-05, NFR-07).** `council-rag export-demo` writes a
    public-safe index to `docs/data`: int8 vectors, BM25 term counts keyed by a hash (no readable
-   word list), meeting metadata and excerpts. transformers.js 4.3.0 (pinned) embeds the query in
+   word list), meeting metadata, item titles and short motion excerpts. transformers.js 4.3.0 (pinned) embeds the query in
    the browser with the same model (its 8-bit weights, which gave the same hit@5), and `docs/assets/search.js` ranks exactly like the Python
    reader of that index (checked in CI for all evaluation questions).
 
@@ -167,14 +167,14 @@ Twelve answers chosen before the run are shown in the demo exactly as generated
 | PA-03 | Share of citations that support their claim | Automatic: 90.2% of 82 citations point to the gold agenda item and 80.5% to the exact gold passage (strict lower bound); read-through: 92.7% support a statement in their answer (k = 6; target 90%) |
 | PA-04 | Share of unanswerable questions declined | 100.0% (20 of 20) declined (k = 6; target 80%) |
 | PA-05 | p95 end-to-end answer time | 12.82 s at k = 6 and 10.96 s at k = 4 on Apple M3 Pro, 18 GB (target under 10 s) |
-| PA-06 | Demo search time after page load | 31 to 42 ms per search once the model is ready (headless Chrome); in that run keyword search was ready 56 ms after navigation and the model (34 MB, first visit) after 5342 ms |
+| PA-06 | Demo search time after page load | 28 to 35 ms per search once the model is ready (headless Chrome); in that run keyword search was ready 53 ms after navigation and the model (34 MB, first visit) after 4298 ms |
 | PA-07 | Cost per answer | $0: the answer model runs locally (electricity not measured) |
 | PA-08 | Automated accessibility scan | axe-core 4.13.0, WCAG 2.0/2.1 A and AA rules: 0 violations (desktop light, desktop dark, 390 px) |
 | PA-09 | Logs contain no IP address or identifier | Pass: `tests/test_privacy.py` (usage log fields are whitelisted; server access log disabled) |
 | PA-10 | UI shows disclaimer, coverage dates, model name and independence notice | Pass: independence notice shown, disclaimer shown, coverage dates shown, search model name shown, answer model name shown (checked in headless Chrome) |
 | PA-11 | Every answer has a citation with meeting name, date, item and a valid official URL | Pass: 82 of 82 citations in 63 answers (k = 6) have meeting name, date, agenda item and an official minutes URL whose anchor exists on the page |
 | PA-12 | No retrieved passage outside the selected date range | Pass: 0 violations in all retrieval runs, the browser index, the API tests and the answer run (0 violations over 11 date-filtered questions) |
-| PA-13 | Every excerpt is at most 300 characters and a verbatim substring of its source | Pass: checked for all 2,149 published excerpts at export time (`council-rag export-demo` refuses otherwise) and in tests |
+| PA-13 | Every excerpt is at most 80 characters and a verbatim substring of its source | Pass: all 1,371 published excerpts (decisions only; longest 80 characters) checked at export time (`council-rag export-demo` refuses otherwise), again against the source passages by `scripts/published_text_share.py`, and in tests |
 | PA-14 | Ingestion re-run: no duplicates, writes a log, updates coverage | Pass: `tests/test_escribe.py::test_rerun_adds_new_minutes_without_duplicates_and_logs` |
 
 ## Requirements traceability
@@ -190,7 +190,7 @@ Twelve answers chosen before the run are shown in the demo exactly as generated
 | FR-07 Repeatable ingestion | `ingest/escribe.py`, `cli.py update` | PA-14 |
 | NFR-01 hit@5 at least 85% | `evaluation/retrieval_eval.py`, CI gate | 0.954, gated in CI on the committed index |
 | NFR-02 citations at least 90% supported; at least 80% declines | `evaluation/answer_eval.py` | 80.5% of citations hold gold evidence (lower bound); 100.0% of unanswerable questions declined |
-| NFR-03 p95 answer under 10 s; demo search under 1 s | `answer_eval.py`, `scripts/screenshots.mjs` | answers p95 12.82 s (k = 6) and 10.96 s (k = 4) on Apple M3 Pro; demo search 31 to 42 ms |
+| NFR-03 p95 answer under 10 s; demo search under 1 s | `answer_eval.py`, `scripts/screenshots.mjs` | answers p95 12.82 s (k = 6) and 10.96 s (k = 4) on Apple M3 Pro; demo search 28 to 35 ms |
 | NFR-04 cost under CAD 0.05 per answer | `pricing.py`, usage log | $0 with the local model; the Claude backend logs cost per call |
 | NFR-05 WCAG 2.1 AA | `docs/`, `scripts/screenshots.mjs` | PA-08: 0 axe-core violations; keyboard path checked |
 | NFR-06 Privacy | `answers.py` (usage log), `cli.py serve` | PA-09 |
@@ -253,10 +253,15 @@ Use it in the app with `COUNCIL_RAG_VECTOR_STORE=pgvector` and `COUNCIL_RAG_PG_D
 
 * City documents are © City of St. John's (all rights reserved). They are downloaded for local
   use into `data/`, which is gitignored; neither the PDFs nor the full text are committed.
-* The public demo shows only excerpts: each is a verbatim span of the minutes of at most 300
-  characters, linked to the official page. Together the 2,149 excerpts amount to about 26% of
-  the parsed minutes text, mostly the wording of motions. The demo index also holds int8
-  vectors and BM25 term counts keyed by a hash rather than readable words.
+* The public demo quotes decisions only: the opening words of each motion, verbatim, up to the
+  end of its first sentence and at most 80 characters, with the recorded result in plain words
+  ("carried, 9 to 0"). Discussion notes, attendance and routine items (adoption of the agenda
+  or minutes, payment vouchers, call to order, adjournment) are listed by title with a link to
+  the official minutes. The 1,371 excerpts come to 7.8% of the parsed minutes text, or 9.3%
+  with the recorded results; the item titles and section headings shown with every result add
+  7.3% and 1.7% ([measurement](eval/results/RESULTS.md#text-published-in-the-demo-index-pa-13),
+  `python scripts/published_text_share.py`). The demo index also holds int8 vectors and BM25
+  term counts keyed by a hash rather than readable words.
 * Precomputed demo answers are short model-written sentences with links to the official items.
 * No accounts, cookies or analytics. The demo processes searches in the browser. The API keeps
   only usage and cost per answer (no question text, IP address or identifiers), and the server
@@ -292,7 +297,7 @@ Use it in the app with `COUNCIL_RAG_VECTOR_STORE=pgvector` and `COUNCIL_RAG_PG_D
 src/council_rag/      ingest (downloader, HTML parser), chunking, retrieval, answers, API, CLI
 eval/                 questions.jsonl, qrels.json, results/ (JSON runs and RESULTS.md)
 docs/                 static demo (GitHub Pages), architecture.svg, screenshots
-scripts/              parity checks, browser checks, showcase and results generators
+scripts/              parity checks, browser checks, published-text share, showcase and results generators
 tests/                pytest suite with a synthetic minutes fixture (no City documents)
 ```
 

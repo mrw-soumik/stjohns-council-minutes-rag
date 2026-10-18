@@ -101,11 +101,25 @@ Model `Xenova/bge-small-en-v1.5@ea104dacec62c0de699686887e3f920caeb4f3e3`; @hugg
 
 ## Browser demo checks (headless Chrome)
 
-- Search time after the model loads (embedding + ranking), five queries: 33, 42, 36, 31, 37 ms.
+- Search time after the model loads (embedding + ranking), five queries: 32, 30, 35, 29, 28 ms.
 - Browser (WASM) versus Node query embeddings, q8 model: min cosine 0.9987.
 - axe-core WCAG 2.1 A/AA violations: desktop light 0, desktop dark 0, mobile 0.
 - Keyboard: first Tab reaches `skip-link`; the skip link moves focus to `#main`.
 - Horizontal scrolling at 390 px: no.
+
+## Text published in the demo index (PA-13)
+
+Measured against the parsed minutes (1,332,934 characters) with `python scripts/published_text_share.py`.
+
+| Published | Count | Characters | Share of the minutes |
+|---|---|---|---|
+| Excerpts (verbatim, decisions only, at most 80 characters) | 1,371 | 103,707 | 7.8% |
+| Recorded outcomes ("carried, 9 to 0") | 1,366 | 20,855 | 1.6% |
+| Item titles (shown with every result) | 2,059 | 97,501 | 7.3% |
+| Section headings (shown with every result) | 793 | 22,676 | 1.7% |
+| Excerpts and outcomes together | | 124,562 | 9.3% |
+
+PA-13: 1,371 excerpts checked against their source passages; longest 80 characters; 0 not verbatim or too long.
 
 ## Answers: Qwen3.5-9B (MLX 4-bit) (k=4 passages)
 

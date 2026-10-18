@@ -84,7 +84,7 @@
 
   <rect class="web" x="516" y="328" width="410" height="50" rx="10"/>
   <text class="t" x="530" y="349">Public-safe export</text>
-  <text class="s" x="530" y="368">int8 vectors, hashed term counts, excerpts up to 300 characters</text>
+  <text class="s" x="530" y="368">int8 vectors, hashed terms, excerpts up to 80 characters</text>
   <path class="arr" d="M721 378 V398" marker-end="url(#arrow)"/>
 
   <rect class="web" x="516" y="400" width="410" height="50" rx="10"/>

@@ -1,5 +1,5 @@
 {
- "base": "http://127.0.0.1:62522/",
+ "base": "http://127.0.0.1:59767/",
  "chrome": "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
  "console": [],
  "pageErrors": [],
@@ -10,8 +10,8 @@
    "after_skip_link": "main"
   },
   "timings_ms": {
-   "indexReadyMs": 56,
-   "modelReadyMs": 5342
+   "indexReadyMs": 53,
+   "modelReadyMs": 4298
   },
   "ui_notices": {
    "independence_notice": true,
@@ -21,11 +21,11 @@
    "answer_model_name": true
   },
   "search_ms": [
-   33,
-   42,
-   36,
-   31,
-   37
+   32,
+   30,
+   35,
+   29,
+   28
   ],
   "browser_vs_node_q8_cosine": {
    "min": 0.9987348245595923,
