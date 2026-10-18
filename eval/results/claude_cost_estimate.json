@@ -1,0 +1,34 @@
+{
+ "model": "claude-opus-5-5",
+ "k": 6,
+ "questions": 85,
+ "request_chars": {
+  "mean": 7328,
+  "max": 10673
+ },
+ "estimated_input_tokens": {
+  "mean": 2303,
+  "max": 3354
+ },
+ "assumptions": {
+  "chars_per_token": 3.5,
+  "citations_overhead": 1.1,
+  "output_tokens": {
+   "low": 200,
+   "high": 1200
+  },
+  "usd_to_cad": 1.4
+ },
+ "per_answer_usd": {
+  "low": {
+   "usd": 0.0132,
+   "cad": 0.0185,
+   "full_eval_run_usd": 1.12
+  },
+  "high": {
+   "usd": 0.0332,
+   "cad": 0.0465,
+   "full_eval_run_usd": 2.82
+  }
+ }
+}

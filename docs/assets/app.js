@@ -257,16 +257,17 @@ async function loadShowcase() {
     } else {
       block.append(el("p", { class: "answer not-found" }, item.answer));
     }
-    if (typeof item.graded_correct === "boolean") {
+    if (item.auto_check) {
       block.append(
         el(
           "p",
           { class: "grade" },
-          `Evaluation grade: ${item.graded_correct ? "correct" : "not correct"} ` +
-            "(checked automatically against the test set).",
+          `Automatic check: ${item.auto_check} (required facts and a citation to the source ` +
+            "passage, checked against the test set).",
         ),
       );
     }
+    if (item.review_note) block.append(el("p", { class: "review-note" }, item.review_note));
     els.showcaseList.append(block);
   }
 }

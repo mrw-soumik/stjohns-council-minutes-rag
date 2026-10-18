@@ -473,6 +473,14 @@ button.secondary:hover {
   color: var(--muted);
 }
 
+.qa .review-note {
+  margin: 6px 0 0;
+  padding: 8px 12px;
+  border-left: 4px solid var(--notice-border);
+  background: var(--notice-bg);
+  font-size: 0.875rem;
+}
+
 .qa .not-found {
   color: var(--muted);
   font-style: italic;

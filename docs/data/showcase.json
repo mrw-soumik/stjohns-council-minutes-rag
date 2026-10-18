@@ -1,6 +1,211 @@
 {
-  "note": "Phase 2 writes precomputed answers here; the demo shows nothing while items is empty.",
-  "model": null,
-  "generated_on": null,
-  "items": []
+ "model": "Qwen3.5-9B (MLX 4-bit)",
+ "generated_on": "2026-10-17",
+ "k_passages": 6,
+ "source": "eval/results/answers_local_k6/results.jsonl",
+ "note": "Question ids were fixed before the run; answers are shown as generated, with review notes where a read-through found an error.",
+ "items": [
+  {
+   "id": "vo12",
+   "question": "Who voted against the 2026 budget?",
+   "status": "answered",
+   "answer": "Councillor Davis voted against the 2026 budget. This decision was recorded during the Regular Council Meeting held on December 15, 2025, where the motion to adopt the budget was carried by a vote of 10 to 1.",
+   "citations": [
+    {
+     "meeting_date": "2025-12-15",
+     "item_ref": "5",
+     "item_title": "BUDGET 2026 PRESENTATION",
+     "url": "https://pub-stjohns.escribemeetings.com/Meeting.aspx?Id=c596a6d0-446c-4cab-b0cc-7459a1123652&Agenda=PostMinutes&lang=English#AgendaItemAgendaItem19TitleHeader"
+    }
+   ],
+   "auto_check": "passed",
+   "review_note": null
+  },
+  {
+   "id": "pa09",
+   "question": "Did the City change the name of its civic holiday in June?",
+   "status": "answered",
+   "answer": "Yes, the City changed the name of its June civic holiday to National Indigenous Peoples Day observed. This decision was made on May 28, 2024, with the motion carried by a vote of 7 to 1 (Passage 3).",
+   "citations": [
+    {
+     "meeting_date": "2024-05-28",
+     "item_ref": "14.6",
+     "item_title": "National Indigenous Peoples Day",
+     "url": "https://pub-stjohns.escribemeetings.com/Meeting.aspx?Id=d901917a-dcf4-4270-832a-981e9eaeff0c&Agenda=PostMinutes&lang=English#AgendaItemAgendaItem45TitleHeader"
+    }
+   ],
+   "auto_check": "passed",
+   "review_note": null
+  },
+  {
+   "id": "sf10",
+   "question": "What did council decide about heritage designation for 157-163 Water Street in 2026?",
+   "status": "answered",
+   "answer": "On April 21, 2026, Council voted to not designate the buildings at 157-163 Water Street as a heritage property (Motion SJMC-R-2026-04-21/116 carried 6 to 5). However, on May 5, 2026, Council rescinded that decision, voting to require that the exterior form and character-defining elements of the buildings be documented before a demolition permit is issued (Motion SJMC-R-2026-05-05/137 lost 2 to 8). Finally, on June 2, 2026, Council approved a Staff Heritage Report to document the exterior form of the buildings for the demolition, with the removal of item 9 from the Heritage By-Law Schedule D (Motion SJMC-R-2026-06-02/158 carried 10 to 0).",
+   "citations": [
+    {
+     "meeting_date": "2026-05-05",
+     "item_ref": "13.2",
+     "item_title": "Notice of Motion - Rescission of SJMC-R-2026-04-21_116",
+     "url": "https://pub-stjohns.escribemeetings.com/Meeting.aspx?Id=a936e5bc-2fb2-4230-8ad5-9f4d150a7dd8&Agenda=PostMinutes&lang=English#AgendaItemAgendaItem39TitleHeader"
+    },
+    {
+     "meeting_date": "2026-04-21",
+     "item_ref": "8.1.1",
+     "item_title": "157-163 Water Street – DEM2600006 – Demolition Application",
+     "url": "https://pub-stjohns.escribemeetings.com/Meeting.aspx?Id=42a858be-85cd-4273-ba10-9a1e77eb7d3e&Agenda=PostMinutes&lang=English#AgendaItemAgendaItem38TitleHeader"
+    },
+    {
+     "meeting_date": "2026-05-05",
+     "item_ref": "13.2",
+     "item_title": "Notice of Motion - Rescission of SJMC-R-2026-04-21_116",
+     "url": "https://pub-stjohns.escribemeetings.com/Meeting.aspx?Id=a936e5bc-2fb2-4230-8ad5-9f4d150a7dd8&Agenda=PostMinutes&lang=English#AgendaItemAgendaItem39TitleHeader"
+    },
+    {
+     "meeting_date": "2026-06-02",
+     "item_ref": "6.1.2",
+     "item_title": "157-163 Water Street – DEM2600006",
+     "url": "https://pub-stjohns.escribemeetings.com/Meeting.aspx?Id=911c0b68-e3d8-471c-be7b-b4f3da69d174&Agenda=PostMinutes&lang=English#AgendaItemAgendaItem42TitleHeader"
+    }
+   ],
+   "auto_check": "passed",
+   "review_note": "Review note: the second sentence is wrong. The motion to rescind the April 21 decision was lost 2 to 8 on May 5, 2026, so the decision not to designate stood."
+  },
+  {
+   "id": "vo10",
+   "question": "What was the result of the vote on rezoning 175 Ladysmith Drive for nine single detached dwellings?",
+   "status": "answered",
+   "answer": "The vote to rezone 175 Ladysmith Drive from the Commercial Neighbourhood (CN) Zone to the Residential Reduced Lot (RRL) Zone for nine single detached dwellings was lost with a tied vote of 5 to 5. This decision was recorded during the Regular Council Meeting held on June 11, 2024, under Item 14.1 (MPA2400007).",
+   "citations": [
+    {
+     "meeting_date": "2024-06-11",
+     "item_ref": "14.1",
+     "item_title": "175 Ladysmith Drive – MPA2400007",
+     "url": "https://pub-stjohns.escribemeetings.com/Meeting.aspx?Id=7157bbbc-2b75-4b4e-9bf7-e6dcaa7c18db&Agenda=PostMinutes&lang=English#AgendaItemAgendaItem20TitleHeader"
+    }
+   ],
+   "auto_check": "passed",
+   "review_note": null
+  },
+  {
+   "id": "vo04",
+   "question": "Did council approve the temporary outdoor eating area and lounge at 75 Airport Heights Drive in June 2023?",
+   "status": "answered",
+   "answer": "No, Council did not approve the temporary outdoor eating area and lounge at 75 Airport Heights Drive in June 2023. The motion to approve the discretionary use for this area was lost with a vote of 0 to 9 on June 19, 2023.",
+   "citations": [
+    {
+     "meeting_date": "2023-06-19",
+     "item_ref": "6.4",
+     "item_title": "Notices Published – 75 Airport Heights Drive - DEV2200088",
+     "url": "https://pub-stjohns.escribemeetings.com/Meeting.aspx?Id=fb9e41b3-ca42-40db-b0de-836f744644bc&Agenda=PostMinutes&lang=English#AgendaItemAgendaItem34TitleHeader"
+    },
+    {
+     "meeting_date": "2023-06-19",
+     "item_ref": "6.4",
+     "item_title": "Notices Published – 75 Airport Heights Drive - DEV2200088",
+     "url": "https://pub-stjohns.escribemeetings.com/Meeting.aspx?Id=fb9e41b3-ca42-40db-b0de-836f744644bc&Agenda=PostMinutes&lang=English#AgendaItemAgendaItem34TitleHeader"
+    }
+   ],
+   "auto_check": "passed",
+   "review_note": null
+  },
+  {
+   "id": "nl07",
+   "question": "What was the total of the 2024 budget that council adopted?",
+   "status": "answered",
+   "answer": "The total of the 2024 budget that Council adopted was $343,947,041. This decision was made at the Regular Council Meeting held on December 12, 2023, with the motion carried by a vote of 11 to 0.",
+   "citations": [
+    {
+     "meeting_date": "2023-12-12",
+     "item_ref": "5",
+     "item_title": "BUDGET 2024 PRESENTATION",
+     "url": "https://pub-stjohns.escribemeetings.com/Meeting.aspx?Id=d588ad40-8359-4682-9de3-92b8b88847b7&Agenda=PostMinutes&lang=English#AgendaItemAgendaItem40TitleHeader"
+    }
+   ],
+   "auto_check": "passed",
+   "review_note": null
+  },
+  {
+   "id": "nl13",
+   "question": "What speed limit and hours did council set for school zones in July 2025?",
+   "status": "answered",
+   "answer": "In July 2025, Council set the school zone speed limit to 30 km/h from 7:00 a.m. to 5:00 p.m. on days when school is regularly held, aligning with the NL Highway Traffic Act. This decision was made on July 29, 2025, with the motion carried 8 to 0.",
+   "citations": [
+    {
+     "meeting_date": "2025-07-29",
+     "item_ref": "14.8",
+     "item_title": "School Zone Time Update",
+     "url": "https://pub-stjohns.escribemeetings.com/Meeting.aspx?Id=72745516-1212-4a6c-92e3-9adba8e2350f&Agenda=PostMinutes&lang=English#AgendaItemAgendaItem35TitleHeader"
+    }
+   ],
+   "auto_check": "passed",
+   "review_note": null
+  },
+  {
+   "id": "sf06",
+   "question": "Who was appointed the City of St. John's Poet Laureate in October 2023?",
+   "status": "answered",
+   "answer": "Mark Callanan was appointed the City of St. John's Poet Laureate in October 2023. This appointment was approved by Council on October 3, 2023, with a vote of 9 to 0.",
+   "citations": [
+    {
+     "meeting_date": "2023-10-03",
+     "item_ref": "14.1",
+     "item_title": "Poet Laureate Appointment",
+     "url": "https://pub-stjohns.escribemeetings.com/Meeting.aspx?Id=86168a03-aa1f-43a1-a203-51f91652a79f&Agenda=PostMinutes&lang=English#AgendaItemAgendaItem21TitleHeader"
+    }
+   ],
+   "auto_check": "passed",
+   "review_note": null
+  },
+  {
+   "id": "sf13",
+   "question": "Which long-term heritage plan did council endorse in February 2026, and what years does it cover?",
+   "status": "answered",
+   "answer": "In February 2026, Council endorsed the St. John's Heritage Strategic Plan 2026-2036, which is intended to guide heritage planning and preservation in the City of St. John's over the next ten years. The motion to endorse this plan was carried with a vote of 10 to 0.",
+   "citations": [
+    {
+     "meeting_date": "2026-02-24",
+     "item_ref": "8.2.1",
+     "item_title": "City of St. John's Heritage Strategic Plan 2026-2036",
+     "url": "https://pub-stjohns.escribemeetings.com/Meeting.aspx?Id=2fb0571f-aa26-4cae-af84-9c8e0d905384&Agenda=PostMinutes&lang=English#AgendaItemAgendaItem26TitleHeader"
+    }
+   ],
+   "auto_check": "passed",
+   "review_note": null
+  },
+  {
+   "id": "pa11",
+   "question": "Is the City still posting updates on X, the platform formerly called Twitter?",
+   "status": "answered",
+   "answer": "No, the City is not posting updates on X. On March 25, 2025, Council carried a motion to deactivate the City's corporate X account and deactivate the What's Happening St. John's X account, relying instead on Facebook and Instagram for updates.",
+   "citations": [
+    {
+     "meeting_date": "2025-03-25",
+     "item_ref": "8.1.1",
+     "item_title": "Review of Social Media Channels",
+     "url": "https://pub-stjohns.escribemeetings.com/Meeting.aspx?Id=19310863-8af8-4068-b25a-fef2616ef69a&Agenda=PostMinutes&lang=English#AgendaItemAgendaItem28TitleHeader"
+    }
+   ],
+   "auto_check": "passed",
+   "review_note": null
+  },
+  {
+   "id": "un06",
+   "question": "Did council adopt a rent control by-law?",
+   "status": "not_found",
+   "answer": "I could not find this in the Regular Council Meeting minutes that were searched.",
+   "citations": [],
+   "auto_check": "passed",
+   "review_note": null
+  },
+  {
+   "id": "un08",
+   "question": "What total did council adopt for the 2027 budget?",
+   "status": "not_found",
+   "answer": "I could not find this in the Regular Council Meeting minutes that were searched.",
+   "citations": [],
+   "auto_check": "passed",
+   "review_note": null
+  }
+ ]
 }

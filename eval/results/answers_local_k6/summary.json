@@ -1,0 +1,179 @@
+{
+ "meta": {
+  "run_at": "2026-10-18T02:26:14+00:00",
+  "backend": "local",
+  "model": "Qwen3.5-9B (MLX 4-bit)",
+  "k": 6,
+  "model_load_and_warmup_s": 7.54,
+  "hardware": {
+   "python": "3.14.8",
+   "machine": "arm64",
+   "chip": "Apple M3 Pro",
+   "memory_gb": "18",
+   "os": "macOS 27.0.1"
+  },
+  "first_run_at": "2026-10-18T02:12:55+00:00"
+ },
+ "summary": {
+  "cases": 85,
+  "errors": 0,
+  "answerable": {
+   "answered": {
+    "k": 63,
+    "n": 65,
+    "rate": 0.9692,
+    "ci95": [
+     0.895,
+     0.992
+    ]
+   },
+   "correct": {
+    "k": 63,
+    "n": 65,
+    "rate": 0.9692,
+    "ci95": [
+     0.895,
+     0.992
+    ]
+   },
+   "facts_ok": {
+    "k": 63,
+    "n": 65,
+    "rate": 0.9692,
+    "ci95": [
+     0.895,
+     0.992
+    ]
+   },
+   "cites_gold": {
+    "k": 63,
+    "n": 65,
+    "rate": 0.9692,
+    "ci95": [
+     0.895,
+     0.992
+    ]
+   },
+   "cites_gold_item": {
+    "k": 63,
+    "n": 65,
+    "rate": 0.9692,
+    "ci95": [
+     0.895,
+     0.992
+    ]
+   },
+   "gold_retrieved": {
+    "k": 63,
+    "n": 65,
+    "rate": 0.9692,
+    "ci95": [
+     0.895,
+     0.992
+    ]
+   }
+  },
+  "citation_precision": {
+   "citations": 82,
+   "supported_evidence": 0.8049,
+   "supported_item": 0.9024
+  },
+  "unanswerable": {
+   "declined": {
+    "k": 20,
+    "n": 20,
+    "rate": 1.0,
+    "ci95": [
+     0.839,
+     1.0
+    ]
+   }
+  },
+  "status_counts": {
+   "answered": 63,
+   "not_found": 22
+  },
+  "reasks": 0,
+  "dropped_citation_cases": 0,
+  "latency_s": {
+   "p50": 9.83,
+   "p95": 12.82,
+   "max": 17.06
+  },
+  "tokens": {
+   "mean_input": 1768,
+   "mean_output": 91
+  },
+  "by_type": {
+   "date_filtered": {
+    "n": 11,
+    "correct": 0.9091
+   },
+   "number_lookup": {
+    "n": 13,
+    "correct": 1.0
+   },
+   "paraphrase": {
+    "n": 13,
+    "correct": 0.9231
+   },
+   "single_fact": {
+    "n": 14,
+    "correct": 1.0
+   },
+   "unanswerable": {
+    "n": 20,
+    "declined": 1.0
+   },
+   "vote_outcome": {
+    "n": 14,
+    "correct": 1.0
+   }
+  },
+  "pa11_citation_links": {
+   "answered": 63,
+   "citations": 82,
+   "problems": [],
+   "pass": true
+  },
+  "pa12_date_filter": {
+   "filtered_questions": 11,
+   "violations": [],
+   "pass": true
+  }
+ },
+ "markdown": [
+  "## Answers: Qwen3.5-9B (MLX 4-bit) (k=6 passages)",
+  "",
+  "Run 2026-10-18T02:26:14+00:00 on Apple M3 Pro, 18 GB, macOS 27.0.1. Greedy decoding; grading is deterministic (no model judge).",
+  "",
+  "| Metric | Result | Target |",
+  "|---|---|---|",
+  "| Answerable: strictly correct (facts + gold cited) | 0.969 (63/65; 95% CI 0.90 to 0.99) | |",
+  "| Answerable: required facts present | 0.969 (63/65; 95% CI 0.90 to 0.99) | |",
+  "| Answerable: cites a gold-evidence passage | 0.969 (63/65; 95% CI 0.90 to 0.99) | |",
+  "| Answerable: answered (not declined) | 0.969 (63/65; 95% CI 0.90 to 0.99) | |",
+  "| Citation precision, gold evidence (lower bound) | 0.805 of 82 citations | NFR-02 >= 0.90 |",
+  "| Citation precision, gold agenda item | 0.902 | |",
+  "| Unanswerable: correctly declined | 1.000 (20/20; 95% CI 0.84 to 1.00) | NFR-02 >= 0.80 |",
+  "| End-to-end latency p50 / p95 / max (s) | 9.83 / 12.82 / 17.06 | NFR-03 p95 < 10 |",
+  "| Cost per answer | $0.00 (local) | NFR-04 < CAD 0.05 |",
+  "| Mean tokens in / out | 1768 / 91 | |",
+  "| Re-asks after invalid JSON / final invalid outputs | 0 / 0 | |",
+  "| Answers with citations to passages not provided (dropped) | 0 | |",
+  "| Citations with meeting, date, item and a working official link (PA-11) | 82 of 82 in 63 answers | all |",
+  "| Passages outside the question's date range (PA-12) | 0 (over 11 filtered questions) | 0 |",
+  "",
+  "By question type (strict correctness for answerable types, declines for unanswerable):",
+  "",
+  "| Type | n | Rate |",
+  "|---|---|---|",
+  "| date_filtered | 11 | 0.91 |",
+  "| number_lookup | 13 | 1.00 |",
+  "| paraphrase | 13 | 0.92 |",
+  "| single_fact | 14 | 1.00 |",
+  "| unanswerable | 20 | 1.00 |",
+  "| vote_outcome | 14 | 1.00 |",
+  ""
+ ]
+}

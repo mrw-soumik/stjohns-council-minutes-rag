@@ -49,6 +49,64 @@ def by_type(runs: list[dict]) -> list[str]:
     return lines
 
 
+def pa_tables(main_run: dict) -> list[str]:
+    """PA-01 (wording subsets) and PA-02 (year, format) from per-question rows."""
+    questions = {
+        q["id"]: q
+        for q in map(json.loads, (ROOT / "eval" / "questions.jsonl").read_text().splitlines())
+        if q.get("answerable")
+    }
+    label = {"bm25": "Keyword only", "dense": "Semantic only", "hybrid": "Combined (hybrid)"}
+    runs = {r["config"]["name"]: r for r in main_run["runs"] if r["config"]["name"] in label}
+
+    def rate(rows: list[dict]) -> str:
+        if not rows:
+            return "n/a"
+        hits = sum(r["hit@5"] for r in rows)
+        return f"{hits / len(rows):.3f} ({int(hits)}/{len(rows)})"
+
+    def subset(rows: list[dict], pred) -> list[dict]:
+        return [r for r in rows if pred(questions[r["id"]])]
+
+    out = [
+        "## PA-01: hit@5 by wording",
+        "",
+        "Exact-term questions use the minutes' own words (names, addresses, numbers, titles); "
+        "paraphrased questions avoid them on purpose.",
+        "",
+        "| Retrieval | All answerable | Exact-term | Paraphrased |",
+        "|---|---|---|---|",
+    ]
+    for name, r in runs.items():
+        rows = r["per_question"]
+        out.append(
+            f"| {label[name]} | {rate(rows)} | "
+            f"{rate(subset(rows, lambda q: q['type'] != 'paraphrase'))} | "
+            f"{rate(subset(rows, lambda q: q['type'] == 'paraphrase'))} |"
+        )
+    years = sorted({q["gold"][0]["meeting_date"][:4] for q in questions.values()})
+    out += [
+        "",
+        "## PA-02: hit@5 by meeting year and source format",
+        "",
+        "Year of the (first) gold meeting. Every passage comes from the official HTML minutes; "
+        "the PDF format is not applicable because the portal's PDF endpoint answers automated "
+        "clients with a bot challenge, so no PDF-derived passages exist.",
+        "",
+        "| Retrieval | " + " | ".join(years) + " | HTML | PDF |",
+        "|---|" + "---|" * (len(years) + 2),
+    ]
+    for name, r in runs.items():
+        rows = r["per_question"]
+        cells = [
+            rate(subset(rows, lambda q, y=y: q["gold"][0]["meeting_date"].startswith(y)))
+            for y in years
+        ]
+        out.append(f"| {label[name]} | " + " | ".join(cells) + f" | {rate(rows)} | n/a |")
+    out.append("")
+    return out
+
+
 def main() -> None:
     out: list[str] = [
         "# Evaluation results",
@@ -80,6 +138,7 @@ def main() -> None:
             misses = ", ".join(r["misses_at_5"]) or "none"
             out.append(f"- `{r['config']['name']}` misses at 5: {misses}")
         out.append("")
+        out += pa_tables(main_run)
     abl = load("retrieval_ablations")
     if abl:
         out += [
@@ -151,9 +210,16 @@ def main() -> None:
             + ("yes." if b["mobile_horizontal_overflow"] else "no."),
             "",
         ]
-    answers = load("answers_local")
-    if answers:
+    for summary_path in sorted(RESULTS.glob("answers_*/summary.json")):
+        answers = json.loads(summary_path.read_text(encoding="utf-8"))
         out += answers.get("markdown", [])
+        out += [f"Per-question rows: `{summary_path.parent.name}/results.jsonl`.", ""]
+        if (summary_path.parent / "review.md").exists():
+            out += [
+                f"Read-through of these answers (errors the automatic grade misses): "
+                f"`{summary_path.parent.name}/review.md`.",
+                "",
+            ]
     (RESULTS / "RESULTS.md").write_text("\n".join(out).rstrip() + "\n", encoding="utf-8")
     print(f"wrote {RESULTS / 'RESULTS.md'}")
 

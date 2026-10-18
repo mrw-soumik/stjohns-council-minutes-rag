@@ -26,6 +26,26 @@ hit@5 by question type (hit rate, number of questions):
 - `dense` misses at 5: sf03, vo02, df05, df06, pa06
 - `hybrid` misses at 5: df05, df06, pa04
 
+## PA-01: hit@5 by wording
+
+Exact-term questions use the minutes' own words (names, addresses, numbers, titles); paraphrased questions avoid them on purpose.
+
+| Retrieval | All answerable | Exact-term | Paraphrased |
+|---|---|---|---|
+| Keyword only | 0.923 (60/65) | 1.000 (52/52) | 0.615 (8/13) |
+| Semantic only | 0.923 (60/65) | 0.923 (48/52) | 0.923 (12/13) |
+| Combined (hybrid) | 0.954 (62/65) | 0.962 (50/52) | 0.923 (12/13) |
+
+## PA-02: hit@5 by meeting year and source format
+
+Year of the (first) gold meeting. Every passage comes from the official HTML minutes; the PDF format is not applicable because the portal's PDF endpoint answers automated clients with a bot challenge, so no PDF-derived passages exist.
+
+| Retrieval | 2023 | 2024 | 2025 | 2026 | HTML | PDF |
+|---|---|---|---|---|---|---|
+| Keyword only | 0.931 (27/29) | 0.917 (11/12) | 0.917 (11/12) | 0.917 (11/12) | 0.923 (60/65) | n/a |
+| Semantic only | 0.897 (26/29) | 0.917 (11/12) | 1.000 (12/12) | 0.917 (11/12) | 0.923 (60/65) | n/a |
+| Combined (hybrid) | 0.966 (28/29) | 0.917 (11/12) | 1.000 (12/12) | 0.917 (11/12) | 0.954 (62/65) | n/a |
+
 ## Retrieval: ablations
 
 Each row changes one setting from the hybrid baseline (first row). These were measured on the same 65 questions used to develop the system, so small differences (one or two questions, about 0.015 to 0.03) are within noise.
@@ -81,8 +101,78 @@ Model `Xenova/bge-small-en-v1.5@ea104dacec62c0de699686887e3f920caeb4f3e3`; @hugg
 
 ## Browser demo checks (headless Chrome)
 
-- Search time after the model loads (embedding + ranking), five queries: 33, 30, 36, 30, 29 ms.
+- Search time after the model loads (embedding + ranking), five queries: 33, 42, 36, 31, 37 ms.
 - Browser (WASM) versus Node query embeddings, q8 model: min cosine 0.9987.
 - axe-core WCAG 2.1 A/AA violations: desktop light 0, desktop dark 0, mobile 0.
 - Keyboard: first Tab reaches `skip-link`; the skip link moves focus to `#main`.
 - Horizontal scrolling at 390 px: no.
+
+## Answers: Qwen3.5-9B (MLX 4-bit) (k=4 passages)
+
+Run 2026-10-18T02:24:38+00:00 on Apple M3 Pro, 18 GB, macOS 27.0.1. Greedy decoding; grading is deterministic (no model judge).
+
+| Metric | Result | Target |
+|---|---|---|
+| Answerable: strictly correct (facts + gold cited) | 0.908 (59/65; 95% CI 0.81 to 0.96) | |
+| Answerable: required facts present | 0.908 (59/65; 95% CI 0.81 to 0.96) | |
+| Answerable: cites a gold-evidence passage | 0.923 (60/65; 95% CI 0.83 to 0.97) | |
+| Answerable: answered (not declined) | 0.954 (62/65; 95% CI 0.87 to 0.98) | |
+| Citation precision, gold evidence (lower bound) | 0.785 of 79 citations | NFR-02 >= 0.90 |
+| Citation precision, gold agenda item | 0.899 | |
+| Unanswerable: correctly declined | 1.000 (20/20; 95% CI 0.84 to 1.00) | NFR-02 >= 0.80 |
+| End-to-end latency p50 / p95 / max (s) | 7.92 / 10.96 / 11.82 | NFR-03 p95 < 10 |
+| Cost per answer | $0.00 (local) | NFR-04 < CAD 0.05 |
+| Mean tokens in / out | 1262 / 92 | |
+| Re-asks after invalid JSON / final invalid outputs | 0 / 0 | |
+| Answers with citations to passages not provided (dropped) | 0 | |
+| Citations with meeting, date, item and a working official link (PA-11) | 79 of 79 in 62 answers | all |
+| Passages outside the question's date range (PA-12) | 0 (over 11 filtered questions) | 0 |
+
+By question type (strict correctness for answerable types, declines for unanswerable):
+
+| Type | n | Rate |
+|---|---|---|
+| date_filtered | 11 | 0.82 |
+| number_lookup | 13 | 1.00 |
+| paraphrase | 13 | 0.92 |
+| single_fact | 14 | 0.93 |
+| unanswerable | 20 | 1.00 |
+| vote_outcome | 14 | 0.86 |
+
+Per-question rows: `answers_local_k4/results.jsonl`.
+
+## Answers: Qwen3.5-9B (MLX 4-bit) (k=6 passages)
+
+Run 2026-10-18T02:26:14+00:00 on Apple M3 Pro, 18 GB, macOS 27.0.1. Greedy decoding; grading is deterministic (no model judge).
+
+| Metric | Result | Target |
+|---|---|---|
+| Answerable: strictly correct (facts + gold cited) | 0.969 (63/65; 95% CI 0.90 to 0.99) | |
+| Answerable: required facts present | 0.969 (63/65; 95% CI 0.90 to 0.99) | |
+| Answerable: cites a gold-evidence passage | 0.969 (63/65; 95% CI 0.90 to 0.99) | |
+| Answerable: answered (not declined) | 0.969 (63/65; 95% CI 0.90 to 0.99) | |
+| Citation precision, gold evidence (lower bound) | 0.805 of 82 citations | NFR-02 >= 0.90 |
+| Citation precision, gold agenda item | 0.902 | |
+| Unanswerable: correctly declined | 1.000 (20/20; 95% CI 0.84 to 1.00) | NFR-02 >= 0.80 |
+| End-to-end latency p50 / p95 / max (s) | 9.83 / 12.82 / 17.06 | NFR-03 p95 < 10 |
+| Cost per answer | $0.00 (local) | NFR-04 < CAD 0.05 |
+| Mean tokens in / out | 1768 / 91 | |
+| Re-asks after invalid JSON / final invalid outputs | 0 / 0 | |
+| Answers with citations to passages not provided (dropped) | 0 | |
+| Citations with meeting, date, item and a working official link (PA-11) | 82 of 82 in 63 answers | all |
+| Passages outside the question's date range (PA-12) | 0 (over 11 filtered questions) | 0 |
+
+By question type (strict correctness for answerable types, declines for unanswerable):
+
+| Type | n | Rate |
+|---|---|---|
+| date_filtered | 11 | 0.91 |
+| number_lookup | 13 | 1.00 |
+| paraphrase | 13 | 0.92 |
+| single_fact | 14 | 1.00 |
+| unanswerable | 20 | 1.00 |
+| vote_outcome | 14 | 1.00 |
+
+Per-question rows: `answers_local_k6/results.jsonl`.
+
+Read-through of these answers (errors the automatic grade misses): `answers_local_k6/review.md`.

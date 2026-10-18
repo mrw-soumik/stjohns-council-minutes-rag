@@ -1,0 +1,178 @@
+{
+ "meta": {
+  "run_at": "2026-10-18T02:24:38+00:00",
+  "backend": "local",
+  "model": "Qwen3.5-9B (MLX 4-bit)",
+  "k": 4,
+  "model_load_and_warmup_s": 8.24,
+  "hardware": {
+   "python": "3.14.8",
+   "machine": "arm64",
+   "chip": "Apple M3 Pro",
+   "memory_gb": "18",
+   "os": "macOS 27.0.1"
+  }
+ },
+ "summary": {
+  "cases": 85,
+  "errors": 0,
+  "answerable": {
+   "answered": {
+    "k": 62,
+    "n": 65,
+    "rate": 0.9538,
+    "ci95": [
+     0.873,
+     0.984
+    ]
+   },
+   "correct": {
+    "k": 59,
+    "n": 65,
+    "rate": 0.9077,
+    "ci95": [
+     0.813,
+     0.957
+    ]
+   },
+   "facts_ok": {
+    "k": 59,
+    "n": 65,
+    "rate": 0.9077,
+    "ci95": [
+     0.813,
+     0.957
+    ]
+   },
+   "cites_gold": {
+    "k": 60,
+    "n": 65,
+    "rate": 0.9231,
+    "ci95": [
+     0.832,
+     0.967
+    ]
+   },
+   "cites_gold_item": {
+    "k": 62,
+    "n": 65,
+    "rate": 0.9538,
+    "ci95": [
+     0.873,
+     0.984
+    ]
+   },
+   "gold_retrieved": {
+    "k": 60,
+    "n": 65,
+    "rate": 0.9231,
+    "ci95": [
+     0.832,
+     0.967
+    ]
+   }
+  },
+  "citation_precision": {
+   "citations": 79,
+   "supported_evidence": 0.7848,
+   "supported_item": 0.8987
+  },
+  "unanswerable": {
+   "declined": {
+    "k": 20,
+    "n": 20,
+    "rate": 1.0,
+    "ci95": [
+     0.839,
+     1.0
+    ]
+   }
+  },
+  "status_counts": {
+   "answered": 62,
+   "not_found": 23
+  },
+  "reasks": 0,
+  "dropped_citation_cases": 0,
+  "latency_s": {
+   "p50": 7.92,
+   "p95": 10.96,
+   "max": 11.82
+  },
+  "tokens": {
+   "mean_input": 1262,
+   "mean_output": 92
+  },
+  "by_type": {
+   "date_filtered": {
+    "n": 11,
+    "correct": 0.8182
+   },
+   "number_lookup": {
+    "n": 13,
+    "correct": 1.0
+   },
+   "paraphrase": {
+    "n": 13,
+    "correct": 0.9231
+   },
+   "single_fact": {
+    "n": 14,
+    "correct": 0.9286
+   },
+   "unanswerable": {
+    "n": 20,
+    "declined": 1.0
+   },
+   "vote_outcome": {
+    "n": 14,
+    "correct": 0.8571
+   }
+  },
+  "pa11_citation_links": {
+   "answered": 62,
+   "citations": 79,
+   "problems": [],
+   "pass": true
+  },
+  "pa12_date_filter": {
+   "filtered_questions": 11,
+   "violations": [],
+   "pass": true
+  }
+ },
+ "markdown": [
+  "## Answers: Qwen3.5-9B (MLX 4-bit) (k=4 passages)",
+  "",
+  "Run 2026-10-18T02:24:38+00:00 on Apple M3 Pro, 18 GB, macOS 27.0.1. Greedy decoding; grading is deterministic (no model judge).",
+  "",
+  "| Metric | Result | Target |",
+  "|---|---|---|",
+  "| Answerable: strictly correct (facts + gold cited) | 0.908 (59/65; 95% CI 0.81 to 0.96) | |",
+  "| Answerable: required facts present | 0.908 (59/65; 95% CI 0.81 to 0.96) | |",
+  "| Answerable: cites a gold-evidence passage | 0.923 (60/65; 95% CI 0.83 to 0.97) | |",
+  "| Answerable: answered (not declined) | 0.954 (62/65; 95% CI 0.87 to 0.98) | |",
+  "| Citation precision, gold evidence (lower bound) | 0.785 of 79 citations | NFR-02 >= 0.90 |",
+  "| Citation precision, gold agenda item | 0.899 | |",
+  "| Unanswerable: correctly declined | 1.000 (20/20; 95% CI 0.84 to 1.00) | NFR-02 >= 0.80 |",
+  "| End-to-end latency p50 / p95 / max (s) | 7.92 / 10.96 / 11.82 | NFR-03 p95 < 10 |",
+  "| Cost per answer | $0.00 (local) | NFR-04 < CAD 0.05 |",
+  "| Mean tokens in / out | 1262 / 92 | |",
+  "| Re-asks after invalid JSON / final invalid outputs | 0 / 0 | |",
+  "| Answers with citations to passages not provided (dropped) | 0 | |",
+  "| Citations with meeting, date, item and a working official link (PA-11) | 79 of 79 in 62 answers | all |",
+  "| Passages outside the question's date range (PA-12) | 0 (over 11 filtered questions) | 0 |",
+  "",
+  "By question type (strict correctness for answerable types, declines for unanswerable):",
+  "",
+  "| Type | n | Rate |",
+  "|---|---|---|",
+  "| date_filtered | 11 | 0.82 |",
+  "| number_lookup | 13 | 1.00 |",
+  "| paraphrase | 13 | 0.92 |",
+  "| single_fact | 14 | 0.93 |",
+  "| unanswerable | 20 | 1.00 |",
+  "| vote_outcome | 14 | 0.86 |",
+  ""
+ ]
+}

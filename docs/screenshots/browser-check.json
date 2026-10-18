@@ -1,5 +1,5 @@
 {
- "base": "http://127.0.0.1:53060/",
+ "base": "http://127.0.0.1:62522/",
  "chrome": "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
  "console": [],
  "pageErrors": [],
@@ -9,12 +9,23 @@
    "first_tab": "skip-link",
    "after_skip_link": "main"
   },
+  "timings_ms": {
+   "indexReadyMs": 56,
+   "modelReadyMs": 5342
+  },
+  "ui_notices": {
+   "independence_notice": true,
+   "disclaimer": true,
+   "coverage_dates": true,
+   "search_model_name": true,
+   "answer_model_name": true
+  },
   "search_ms": [
    33,
-   30,
+   42,
    36,
-   30,
-   29
+   31,
+   37
   ],
   "browser_vs_node_q8_cosine": {
    "min": 0.9987348245595923,
@@ -23,18 +34,24 @@
   "axe_desktop_light": {
    "violations": [],
    "passes": 25,
-   "incomplete": []
+   "incomplete": [
+    "aria-prohibited-attr"
+   ]
   },
   "axe_desktop_dark": {
    "violations": [],
    "passes": 25,
-   "incomplete": []
+   "incomplete": [
+    "aria-prohibited-attr"
+   ]
   },
   "mobile_horizontal_overflow": false,
   "axe_mobile_light": {
    "violations": [],
    "passes": 25,
-   "incomplete": []
+   "incomplete": [
+    "aria-prohibited-attr"
+   ]
   }
  }
 }

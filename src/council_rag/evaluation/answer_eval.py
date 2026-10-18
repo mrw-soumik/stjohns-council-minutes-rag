@@ -101,8 +101,83 @@ def check_date_filters(rows: list[dict[str, Any]]) -> dict[str, Any]:
     return {"filtered_questions": checked, "violations": violations, "pass": not violations}
 
 
+_NUMBER_WORDS = {
+    w: str(i)
+    for i, w in enumerate(
+        [
+            "zero",
+            "one",
+            "two",
+            "three",
+            "four",
+            "five",
+            "six",
+            "seven",
+            "eight",
+            "nine",
+            "ten",
+            "eleven",
+            "twelve",
+        ]
+    )
+}
+_NUMBER_WORD_RE = re.compile(r"\b(" + "|".join(_NUMBER_WORDS) + r")\b", re.IGNORECASE)
+_VOTE_PATTERNS = [  # all rewrite a vote count to the minutes' own "X to Y" form
+    (
+        re.compile(
+            r"\b(\d{1,2})\s+(?:votes?\s+)?in\s+favou?r\b[^.;]{0,40}?\b(\d{1,2})\s+"
+            r"(?:votes?\s+)?(?:against|opposed)\b",
+            re.IGNORECASE,
+        ),
+        r"\1 to \2",
+    ),
+    (
+        re.compile(
+            r"\b(\d{1,2})\s+(?:votes?\s+)?(?:against|opposed)\b[^.;]{0,40}?\b(\d{1,2})\s+"
+            r"(?:votes?\s+)?in\s+favou?r\b",
+            re.IGNORECASE,
+        ),
+        r"\2 to \1",
+    ),
+    (
+        re.compile(r"\b(\d{1,2})\s+for\b[^.;]{0,20}?\b(\d{1,2})\s+against\b", re.IGNORECASE),
+        r"\1 to \2",
+    ),
+    (re.compile(r"(?<![\d-])(\d{1,2})\s*[-\u2013]\s*(\d{1,2})(?![\d-])"), r"\1 to \2"),
+]
+
+
+def normalize_votes(text: str) -> str:
+    """Rewrite vote counts ("1 in favour and 8 against", "8-1") as "X to Y"."""
+    text = _NUMBER_WORD_RE.sub(lambda m: _NUMBER_WORDS[m.group(1).lower()], text)
+    for pattern, repl in _VOTE_PATTERNS:
+        text = pattern.sub(repl, text)
+    return text
+
+
 def facts_present(text: str, facts: list[list[str]]) -> bool:
-    return all(any(contains_normalized(text, alt) for alt in group) for group in facts)
+    """Every fact group appears in the answer (vote phrasing normalised first)."""
+    variants = (text, normalize_votes(text))
+    return all(
+        any(contains_normalized(v, alt) for v in variants for alt in group) for group in facts
+    )
+
+
+def regrade(
+    rows: list[dict[str, Any]], questions: dict[str, EvalQuestion], chunks_by_id: dict[str, Chunk]
+) -> list[dict[str, Any]]:
+    """Recompute grades from saved rows (answer text, cited and retrieved chunk ids)."""
+    from council_rag.answers import citation_for
+
+    out = []
+    for row in rows:
+        passages = [chunks_by_id[cid] for cid in row["passages"] if cid in chunks_by_id]
+        cites = [
+            citation_for(chunks_by_id[c["chunk_id"]], c["passage"] - 1) for c in row["citations"]
+        ]
+        answer = Answer(row["status"], row["answer"], citations=cites)
+        out.append({**row, "grade": grade(questions[row["id"]], answer, passages)})
+    return out
 
 
 def grade(
@@ -403,8 +478,14 @@ def main(args: argparse.Namespace) -> int:
             for line in (out_dir / "results.jsonl").read_text(encoding="utf-8").splitlines()
             if line.strip()
         ]
-        known = {q.id for q in questions}
-        rows = [r for r in rows if r["id"] in known]
+        by_qid = {q.id: q for q in questions}
+        chunks_all, _, _ = load_index(paths.index)
+        rows = regrade(
+            [r for r in rows if r["id"] in by_qid], by_qid, {c.chunk_id: c for c in chunks_all}
+        )
+        with (out_dir / "results.jsonl").open("w", encoding="utf-8") as fh:
+            for r in rows:
+                fh.write(json.dumps(r, ensure_ascii=False) + "\n")
         meta = previous.get("meta", {})
     else:
         retriever, _ = load_retriever(paths.index)

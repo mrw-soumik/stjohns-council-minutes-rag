@@ -126,3 +126,15 @@ def test_pa12_date_filter_check() -> None:
     assert result["filtered_questions"] == 2 and result["violations"] == [
         "b: 2023-06-12_7a4fcfc9_020"
     ]
+
+
+def test_vote_phrasing_is_normalised() -> None:
+    from council_rag.evaluation.answer_eval import normalize_votes
+
+    facts = [["1 to 8"]]
+    assert facts_present("It was lost with a vote of 1 in favor and 8 against.", facts)
+    assert facts_present("Defeated, one in favour and eight opposed.", facts)
+    assert facts_present("Eight votes against and one in favour.", facts)
+    assert facts_present("The vote was 1-8.", facts)
+    assert not facts_present("It carried 8 to 1.", facts)
+    assert normalize_votes("adopted on 2024-03-19") == "adopted on 2024-03-19"  # dates untouched
