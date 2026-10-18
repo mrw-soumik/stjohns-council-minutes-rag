@@ -440,6 +440,10 @@ button.secondary:hover {
   color: var(--muted);
 }
 
+.result-why.unquoted {
+  margin-top: 8px;
+}
+
 /* Showcase answers ------------------------------------------------------ */
 
 .showcase {

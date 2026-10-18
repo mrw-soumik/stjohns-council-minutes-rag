@@ -34,7 +34,7 @@ class Citation:
     item_title: str
     url: str | None
     pdf_url: str | None
-    cited_text: str  # exact quoted span (Claude) or a short excerpt of the passage (local)
+    cited_text: str  # exact quoted span (Claude) or the passage's published excerpt (local)
     start_char: int | None = None  # span inside the passage text, when the backend gives one
     end_char: int | None = None
     answer_start: int = 0  # span of the answer text this citation supports

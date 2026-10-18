@@ -84,12 +84,17 @@ def cmd_update(args: argparse.Namespace) -> int:
 
 
 def _print_results(results: list) -> None:
-    from council_rag.chunking import make_excerpt
+    from council_rag.chunking import excerpt_for
 
     for r in results:
         c = r.chunk
+        ex = excerpt_for(c)
         print(f"{r.rank}. {c.meeting_date}  {c.meeting_name}  item {c.item_ref}: {c.item_title}")
-        print(textwrap.indent(textwrap.fill(make_excerpt(c), 96), "   "))
+        if ex.text:
+            quote = ex.text + (" ..." if ex.cut else "")
+            print(textwrap.indent(textwrap.fill(quote, 96), "   "))
+        if ex.outcome:
+            print(f"   Recorded result: {ex.outcome}")
         print(f"   {c.url}")
 
 

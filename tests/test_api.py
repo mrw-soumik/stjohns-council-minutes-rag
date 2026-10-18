@@ -4,6 +4,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from council_rag import api
+from council_rag.chunking import EXCERPT_MAX_CHARS
 from council_rag.generation import AnswerGenerator, GenerationError
 from council_rag.index import IndexMeta
 from council_rag.retrieval import HybridRetriever
@@ -54,7 +55,9 @@ def test_search_returns_short_excerpts_and_links(client) -> None:
     assert res.status_code == 200
     first = res.json()["results"][0]
     assert first["meeting_date"] == "2024-03-04" and first["item_ref"] == "3.1"
-    assert len(first["excerpt"]) <= 300
+    assert len(first["excerpt"]) <= EXCERPT_MAX_CHARS
+    assert first["excerpt"].startswith("That Council approve the Discretionary Use")
+    assert first["outcome"] == "lost, 1 to 3"
     assert first["url"].endswith("#AgendaItemAgendaItem8TitleHeader")
 
 

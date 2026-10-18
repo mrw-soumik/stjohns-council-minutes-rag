@@ -97,7 +97,7 @@
       <ul>
         <li><strong>Hybrid search.</strong> Keyword matching (BM25) finds exact terms such as addresses and by-law numbers; a small embedding model (<span id="embed-model">BAAI bge-small-en-v1.5</span>) finds passages with the same meaning in different words. The two rankings are merged with reciprocal rank fusion.</li>
         <li><strong>Runs in your browser.</strong> The page downloads the search model once (about 34&nbsp;MB, then cached) and a compact index. Your searches are processed on your device and are not sent anywhere.</li>
-        <li><strong>Traceable.</strong> Each result names the meeting, date and agenda item and links to that item in the official minutes.</li>
+        <li><strong>Traceable.</strong> Each result names the meeting, date and agenda item and links to that item in the official minutes. For decisions it also shows the opening words of the motion and the recorded result.</li>
         <li><strong>Measured.</strong> On a test set of 65 answerable questions, the correct passage is in the top five results for 95% of them (target: 85%). The example answers above were generated offline and checked automatically; see the project README for methods and limitations.</li>
       </ul>
     </section>

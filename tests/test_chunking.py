@@ -2,10 +2,13 @@ from council_rag.chunking import (
     EXCERPT_MAX_CHARS,
     Chunk,
     ChunkingConfig,
+    Excerpt,
     chunk_minutes,
     excerpt_for,
+    first_sentence_end,
     long_date,
     make_excerpt,
+    outcome_label,
 )
 from council_rag.ingest.html_minutes import Minutes
 
@@ -62,39 +65,86 @@ def test_options_drop_notes_and_attendance(synthetic_minutes: Minutes) -> None:
     assert [c.item_ref for c in chunks] == ["2.1", "3.1", "4.1.1", "5.1"]
 
 
-def test_excerpt_shows_short_motion_with_votes_verbatim(synthetic_minutes: Minutes) -> None:
+def test_decision_excerpt_is_the_opening_of_the_motion(synthetic_minutes: Minutes) -> None:
     chunk = next(c for c in chunk_minutes(synthetic_minutes) if c.item_ref == "3.1")
     ex = excerpt_for(chunk)
     assert ex.text in chunk.text  # PA-13: verbatim
-    assert ex.text.startswith("That Council approve the Discretionary Use application")
-    assert ex.text.endswith("MOTION LOST (1 to 3)") or ex.result == "MOTION LOST (1 to 3)"
+    assert ex.text == (
+        "That Council approve the Discretionary Use application for a Home Occupation at"
+    )
+    assert ex.cut and len(ex.text) <= EXCERPT_MAX_CHARS
+    assert ex.outcome == "lost, 1 to 3"  # recorded result, in plain words
 
 
-def test_long_motion_keeps_result_separately(synthetic_minutes: Minutes) -> None:
+def test_excerpt_skips_notes_and_vote_lists(synthetic_minutes: Minutes) -> None:
     chunk = next(c for c in chunk_minutes(synthetic_minutes) if c.item_ref == "4.1.1")
-    ex = excerpt_for(chunk, max_chars=120)
-    assert ex.text in chunk.text and ex.cut
-    assert ex.result == "MOTION CARRIED (4 to 0)"
-    assert len(ex.text) + len(ex.result) + 1 <= 120
-    assert "For (4)" not in ex.text  # vote lists are not used to fill a cut excerpt
+    ex = excerpt_for(chunk)
+    # "No." does not end the sentence; the cut falls at a word boundary within the cap
+    assert ex.text == (
+        "That Council adopt By-Law No. 9999, the Snow Clearing (Amendment No. 2, 2024)"
+    )
+    assert ex.cut and ex.outcome == "carried, 4 to 0"
+    assert "Members of Council" not in ex.text and "For (4)" not in ex.text
+
+
+def test_notes_attendance_and_routine_items_are_not_quoted(synthetic_minutes: Minutes) -> None:
+    by_ref = {c.item_ref: c for c in chunk_minutes(synthetic_minutes)}
+    # attendance, call to order, adoption of agenda, discussion notes, adjournment
+    for ref in ("", "1", "2.1", "5.1", "6"):
+        assert excerpt_for(by_ref[ref]) == Excerpt("")
+        assert make_excerpt(by_ref[ref]) == ""
+
+
+def test_motion_wording_over_several_lines(synthetic_minutes: Minutes) -> None:
+    text = (
+        "9.1 Heritage Designation\nSJMC-R-2024-03-04/010\nMoved By Councillor Placeholder\n"
+        "Seconded By Councillor Fictional\nThat Council:\n"
+        "(1) direct staff to prepare a designation by-law; and\n(2) thank the owners.\n"
+        "For (4): Mayor Example\nMOTION CARRIED (4 to 0)"
+    )
+    chunk = Chunk.from_json({**chunk_minutes(synthetic_minutes)[3].to_json(), "text": text})
+    ex = excerpt_for(chunk)
+    assert ex.text == "That Council:\n(1) direct staff to prepare a designation by-law"
+    assert ex.cut and ex.outcome == "carried, 4 to 0"
+
+
+def test_first_sentence_end_ignores_abbreviations() -> None:
+    cases = {
+        "That Council thank No. 5 Squadron. Further, that staff report back.": (
+            "That Council thank No. 5 Squadron."
+        ),
+        "That Council approve X; and that Y.": "That Council approve X",
+        "That Council approve the plan for St. John's Harbour. The fee is waived.": (
+            "That Council approve the plan for St. John's Harbour."
+        ),
+        "That Council meet at 4:00 p.m. Monday. Then adjourn.": (
+            "That Council meet at 4:00 p.m. Monday."
+        ),
+    }
+    for text, first in cases.items():
+        assert text[: first_sentence_end(text)] == first
+
+
+def test_outcome_labels() -> None:
+    assert outcome_label("MOTION CARRIED (10 to 1)") == "carried, 10 to 1"
+    assert outcome_label("MOTION LOST") == "lost"
+    assert outcome_label("WITHDRAWN") == "withdrawn"
+    assert outcome_label("Abstention noted.") is None
 
 
 def test_every_excerpt_is_verbatim_and_short(synthetic_minutes: Minutes) -> None:
     for chunk in chunk_minutes(synthetic_minutes):
         ex = excerpt_for(chunk)
-        shown = len(ex.text) + (len(ex.result) + 1 if ex.result else 0)
-        assert shown <= EXCERPT_MAX_CHARS
-        assert ex.text in chunk.text and (ex.result is None or ex.result in chunk.text)
+        assert len(ex.text) <= EXCERPT_MAX_CHARS and ex.text in chunk.text
         assert make_excerpt(chunk) == ex.text
     long = Chunk.from_json(
         {
-            **chunk_minutes(synthetic_minutes)[0].to_json(),
-            "text": "heading\n" + "word " * 400,
-            "kind": "item",
+            **chunk_minutes(synthetic_minutes)[3].to_json(),
+            "text": "heading\nThat " + "word " * 400,
         }
     )
     ex = excerpt_for(long)
-    assert ex.cut and len(ex.text) <= EXCERPT_MAX_CHARS and ex.text in long.text
+    assert ex.cut and 0 < len(ex.text) <= EXCERPT_MAX_CHARS and ex.text in long.text
 
 
 def test_long_date_is_portable() -> None:

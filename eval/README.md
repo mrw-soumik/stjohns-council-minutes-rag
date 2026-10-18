@@ -109,6 +109,7 @@ council-rag verify-eval
 council-rag eval-retrieval --configs main --write-qrels     # BM25, dense, hybrid (+ qrels)
 council-rag eval-retrieval --configs ablations              # one setting changed per row
 council-rag export-demo --out docs/data
+python scripts/published_text_share.py                      # share of the minutes text published (PA-13)
 council-rag eval-retrieval --source demo --tag demo_index_fp32_query
 council-rag eval-retrieval --source demo --query-model onnx/model_quantized.onnx --tag demo_index_q8_query
 pip install -e ".[local]"                                   # MLX, Apple silicon only

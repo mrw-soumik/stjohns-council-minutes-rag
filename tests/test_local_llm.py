@@ -7,7 +7,7 @@ import json
 import pytest
 
 from council_rag.answers import NOT_FOUND_MESSAGE, make_answerer
-from council_rag.chunking import Chunk, chunk_minutes
+from council_rag.chunking import EXCERPT_MAX_CHARS, Chunk, chunk_minutes
 from council_rag.local_llm import (
     SYSTEM_PROMPT,
     Generation,
@@ -57,7 +57,7 @@ def test_valid_reply_maps_citations(chunks) -> None:
     (c,) = answer.citations
     assert (c.meeting_date, c.item_ref, c.chunk_id) == ("2024-03-04", "3.1", chunks[1].chunk_id)
     assert c.url and c.url.endswith("#AgendaItemAgendaItem8TitleHeader")
-    assert len(c.cited_text) <= 300 and c.cited_text in chunks[1].text  # verbatim excerpt
+    assert len(c.cited_text) <= EXCERPT_MAX_CHARS and c.cited_text in chunks[1].text
     assert answer.usage and answer.usage.cost_usd == 0.0 and answer.usage.attempts == 1
     assert answer.model == "scripted-test-model"
 

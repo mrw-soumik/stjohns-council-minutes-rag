@@ -211,14 +211,21 @@ function render(hits, query, mode, ms, note) {
     );
     for (const hit of group) {
       const part = state.index.chunks[hit.idx];
-      const quote = el("blockquote", { class: "excerpt", cite: itemUrl || null }, part.excerpt);
-      if (part.cut) quote.append(el("span", { class: "more", "aria-label": "excerpt continues" }, " \u2026"));
-      article.append(quote);
-      if (part.result) article.append(el("p", { class: "result-outcome" }, `Recorded result: ${part.result}`));
+      // Only decisions carry a quote: the opening words of the motion and its outcome.
+      if (part.excerpt) {
+        const quote = el("blockquote", { class: "excerpt", cite: itemUrl || null }, part.excerpt);
+        if (part.cut) quote.append(el("span", { class: "more", "aria-label": "excerpt continues" }, " \u2026"));
+        article.append(quote);
+      }
+      if (part.outcome) article.append(el("p", { class: "result-outcome" }, `Recorded result: ${part.outcome}`));
       const why = [];
       if (hit.bm25Rank) why.push(`keyword rank ${hit.bm25Rank}`);
       if (hit.denseRank) why.push(`meaning rank ${hit.denseRank}`);
-      if (why.length) article.append(el("p", { class: "result-why" }, `Matched by ${why.join(" and ")}.`));
+      if (why.length) {
+        const lead = part.excerpt ? "Matched by" : "Passage not quoted; matched by";
+        const cls = part.excerpt ? "result-why" : "result-why unquoted";
+        article.append(el("p", { class: cls }, `${lead} ${why.join(" and ")}.`));
+      }
     }
     article.append(links);
     els.results.append(el("li", { class: "result" }, article));

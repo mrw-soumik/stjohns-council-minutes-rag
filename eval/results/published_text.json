@@ -1,0 +1,31 @@
+{
+  "parsed_minutes_chars": 1332934,
+  "passages": 2149,
+  "excerpt_max_chars": 80,
+  "excerpts": {
+    "count": 1371,
+    "chars": 103707,
+    "share": 0.0778
+  },
+  "outcomes": {
+    "count": 1366,
+    "chars": 20855,
+    "share": 0.0156
+  },
+  "excerpts_and_outcomes_share": 0.0934,
+  "item_titles": {
+    "count": 2059,
+    "chars": 97501,
+    "share": 0.0731
+  },
+  "section_headings": {
+    "count": 793,
+    "chars": 22676,
+    "share": 0.017
+  },
+  "pa13": {
+    "checked": 1371,
+    "longest": 80,
+    "violations": []
+  }
+}

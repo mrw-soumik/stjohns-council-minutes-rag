@@ -185,82 +185,139 @@ def chunk_minutes(minutes: Minutes, config: ChunkingConfig | None = None) -> lis
     return chunks
 
 
-EXCERPT_MAX_CHARS = 300  # hard cap for any published passage (project brief, PA-13)
-EXCERPT_NOTE_CHARS = 160  # discussion notes and attendance get a shorter teaser
-EXCERPT_FULL_SPAN_CHARS = 220  # show motion, votes and result together only when this short
+# --- published excerpts -----------------------------------------------------------------
+#
+# The browser demo and the API show, for every chunk, the agenda item title, its section
+# path and a link to the item in the official minutes. Only decisions are quoted: the
+# opening words of the motion and its recorded outcome. Discussion notes, attendance and
+# routine items are shown by title and link only. This keeps the published text to a
+# small share of the minutes (measured by scripts/published_text_share.py).
+
+EXCERPT_MAX_CHARS = 80  # hard cap for any published excerpt (PA-13)
+
+_ROUTINE_TITLE_RE = re.compile(
+    r"^\s*(?:(?:adoption|approval) of (?:the )?(?:agenda|minutes)|minutes of\b"
+    r"|call to order|adjournment|weekly payment vouchers?)",
+    re.IGNORECASE,
+)
+_VOTE_OR_RESULT_RE = re.compile(
+    r"^(?:(?:For|Against|Abstain(?:ed)?|Absent|Recused)\s*\(\d+\)"
+    r"|MOTION\b|WITHDRAWN\b|CARRIED\b|DEFEATED\b|LOST\b)"
+)
+_OUTCOME_RE = re.compile(r"^(?:MOTION )?(CARRIED|LOST|DEFEATED|WITHDRAWN)(?: \((\d+) to (\d+)\))?")
+_SENTENCE_END_RE = re.compile(r"[.!?;](?=\s)")
+_ABBREVIATIONS = frozenset(
+    {
+        "approx", "ave", "blvd", "co", "corp", "cres", "dept", "dr", "etc", "hwy", "inc", "jr",
+        "ltd", "mr", "mrs", "ms", "mt", "no", "nos", "pl", "rd", "sr", "st", "vs",
+    }
+)  # fmt: skip
+_OPENERS = '(\u201c"'
+_TRAILING = ' \n,;:(\u2013-\u201c"'
 
 
 @dataclass(frozen=True)
 class Excerpt:
-    """A verbatim span of a chunk's text (``text in chunk.text`` always holds).
+    """What is published for a chunk besides its title, path and link.
 
-    ``cut`` is true when the passage continues after the span (the UI adds an ellipsis);
-    ``result`` is the verbatim outcome line of the motion shown ("MOTION CARRIED (10 to 1)")
-    when it did not fit inside the span.
+    ``text`` is an exact substring of the chunk text, or "" when nothing is quoted.
+    ``cut`` is true when the motion's wording continues after ``text`` (the UI adds an
+    ellipsis). ``outcome`` is the recorded result in plain words ("carried, 9 to 0").
     """
 
     text: str
-    cut: bool
-    result: str | None = None
+    cut: bool = False
+    outcome: str | None = None
 
 
-def _prefix(text: str, start: int, limit: int, end: int | None = None) -> tuple[str, bool]:
-    """Verbatim span from ``start`` of at most ``limit`` characters, cut at a word boundary."""
-    stop = len(text) if end is None else end
-    if stop - start <= limit:
-        return text[start:stop].rstrip(), stop < len(text.rstrip())
-    window = text[start : start + limit]
-    cut_at = max(window.rfind(" "), window.rfind("\n"))
-    if cut_at > limit // 2:
-        window = window[:cut_at]
-    return window.rstrip(" ,;:\n"), True
+def is_routine(chunk: Chunk) -> bool:
+    """Agenda and minutes adoption, payment vouchers, call to order and adjournment."""
+    return bool(_ROUTINE_TITLE_RE.match(chunk.item_title))
 
 
-def excerpt_for(
-    chunk: Chunk, max_chars: int = EXCERPT_MAX_CHARS, note_chars: int = EXCERPT_NOTE_CHARS
-) -> Excerpt:
-    """Choose the short, quotable excerpt for a chunk (FR-05, PA-13).
+def outcome_label(result_line: str) -> str | None:
+    """'MOTION CARRIED (9 to 0)' -> 'carried, 9 to 0'; 'WITHDRAWN' -> 'withdrawn'."""
+    m = _OUTCOME_RE.match(result_line)
+    if not m:
+        return None
+    word = m.group(1).lower()
+    return f"{word}, {m.group(2)} to {m.group(3)}" if m.group(2) else word
 
-    Decisions show the motion wording, continuing through the recorded votes and result
-    when that whole span is short; otherwise the motion wording alone, with the result
-    line kept separately. Other chunks show an opening teaser. The item heading is left
-    out because it is displayed separately. Every span is an exact substring.
+
+def first_sentence_end(text: str) -> int:
+    """Length of the first sentence of ``text``, ending at a full stop or a semicolon.
+
+    A full stop after an abbreviation or an initial ("St. John's", "No. 5", "p.m.") does
+    not end the sentence.
     """
+    for m in _SENTENCE_END_RE.finditer(text):
+        end = m.start()
+        if text[end] == ";":
+            return end
+        rest = text[end + 1 :].lstrip()
+        if not rest or not (rest[0].isupper() or rest[0] in _OPENERS):
+            continue
+        before = text[:end].split()
+        word = before[-1].lower().lstrip(_OPENERS) if before else ""
+        if len(word) <= 1 or "." in word or word in _ABBREVIATIONS:
+            continue
+        return end + 1
+    return len(text)
+
+
+def _clip(text: str, limit: int) -> str:
+    """Prefix of ``text`` of at most ``limit`` characters, ending at a word boundary."""
+    if len(text) <= limit:
+        return text
+    head = text[:limit]
+    if not text[limit].isspace():
+        space = max(head.rfind(" "), head.rfind("\n"))
+        if space > limit // 2:
+            head = head[:space]
+    return head.rstrip(_TRAILING)
+
+
+def excerpt_for(chunk: Chunk, max_chars: int = EXCERPT_MAX_CHARS) -> Excerpt:
+    """Choose what is quoted for a chunk (FR-05, PA-13).
+
+    Decisions are quoted by the opening of their first motion: up to the end of its first
+    sentence and at most ``max_chars`` characters, cut at a word boundary, with the
+    recorded outcome alongside. The wording may run over several lines ("That Council:"
+    followed by a numbered list). Vote lists, discussion notes, attendance and routine
+    items are never quoted.
+    """
+    if chunk.kind != "item" or is_routine(chunk):
+        return Excerpt("")
     text = chunk.text
     lines = text.split("\n")
     offsets, pos = [], 0
     for line in lines:
         offsets.append(pos)
         pos += len(line) + 1
-    first = 1 if chunk.kind == "item" and len(lines) > 1 else 0
-    motion_idx = None
-    for i in range(first, len(lines)):
-        if lines[i].startswith("Seconded By") and i + 1 < len(lines):
-            motion_idx = i + 1
+    # line 0 is the item heading; the motion follows "Seconded By", else the first "That "
+    start = next(
+        (i + 1 for i in range(1, len(lines) - 1) if lines[i].startswith("Seconded By")), None
+    )
+    if start is None:
+        start = next((i for i in range(1, len(lines)) if lines[i].startswith("That ")), None)
+    if start is None:
+        return Excerpt("")
+    stop = next(
+        (i for i in range(start + 1, len(lines)) if _VOTE_OR_RESULT_RE.match(lines[i])),
+        len(lines),
+    )
+    wording = text[offsets[start] : offsets[stop - 1] + len(lines[stop - 1])].rstrip()
+    span = _clip(wording[: first_sentence_end(wording)], max_chars)
+    outcome = None
+    for line in lines[stop:]:
+        if line.startswith("Moved By") or _DECISION_RE.fullmatch(line):
+            break  # the next motion
+        if _RESULT_RE.match(line):
+            outcome = outcome_label(line)
             break
-    if motion_idx is None:
-        motion_idx = next(
-            (i for i in range(first, len(lines)) if lines[i].startswith("That ")), None
-        )
-    if motion_idx is None:
-        span, cut = _prefix(text, offsets[first], min(max_chars, note_chars))
-        return Excerpt(span, cut)
-    m_start = offsets[motion_idx]
-    r_idx = next((i for i in range(motion_idx, len(lines)) if _RESULT_RE.match(lines[i])), None)
-    if r_idx is not None:
-        r_end = offsets[r_idx] + len(lines[r_idx])
-        if r_end - m_start <= min(max_chars, EXCERPT_FULL_SPAN_CHARS):  # short: show it all
-            return Excerpt(text[m_start:r_end], r_end < len(text.rstrip()))
-        # Too long to show whole: the motion wording only (no vote lists), then the result.
-        result = lines[r_idx]
-        m_end = m_start + len(lines[motion_idx])
-        span, _ = _prefix(text, m_start, max_chars - len(result) - 1, m_end)
-        return Excerpt(span, True, result)
-    m_end = m_start + len(lines[motion_idx])
-    span, _ = _prefix(text, m_start, max_chars, m_end)
-    return Excerpt(span, True)
+    return Excerpt(span, len(span) < len(wording.rstrip(" .")), outcome)
 
 
 def make_excerpt(chunk: Chunk, max_chars: int = EXCERPT_MAX_CHARS) -> str:
-    """The verbatim excerpt text only (used by the API and the answer backends)."""
+    """The verbatim excerpt text only ("" when the chunk is not quoted)."""
     return excerpt_for(chunk, max_chars).text

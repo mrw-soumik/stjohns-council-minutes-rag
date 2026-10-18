@@ -16,7 +16,7 @@ from pydantic import BaseModel, Field, model_validator
 
 from council_rag import __version__
 from council_rag.answers import Answerer, configured_model_label, make_answerer
-from council_rag.chunking import make_excerpt
+from council_rag.chunking import EXCERPT_MAX_CHARS, excerpt_for
 from council_rag.config import data_paths
 from council_rag.generation import GenerationError
 from council_rag.index import IndexMeta
@@ -64,7 +64,14 @@ class Passage(BaseModel):
     meeting_date: date
     item_ref: str
     item_title: str
-    excerpt: str = Field(..., description="At most 300 characters of the source passage")
+    excerpt: str = Field(
+        ...,
+        description=(
+            f"Opening words of the motion, verbatim, at most {EXCERPT_MAX_CHARS} characters; "
+            "empty for discussion notes, attendance and routine items"
+        ),
+    )
+    outcome: str | None = Field(None, description="Recorded result, e.g. 'carried, 9 to 0'")
     url: str | None = Field(None, description="Official minutes page, anchored at the item")
     pdf_url: str | None = Field(None, description="Official PDF of the minutes, if published")
     score: float
@@ -123,6 +130,7 @@ class Health(BaseModel):
 
 def to_passage(result: SearchResult) -> Passage:
     c = result.chunk
+    ex = excerpt_for(c)
     return Passage(
         rank=result.rank,
         chunk_id=c.chunk_id,
@@ -130,7 +138,8 @@ def to_passage(result: SearchResult) -> Passage:
         meeting_date=date.fromisoformat(c.meeting_date),
         item_ref=c.item_ref,
         item_title=c.item_title,
-        excerpt=make_excerpt(c),
+        excerpt=ex.text,
+        outcome=ex.outcome,
         url=c.url,
         pdf_url=c.pdf_url,
         score=round(result.score, 6),

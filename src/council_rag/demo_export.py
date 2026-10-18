@@ -2,9 +2,11 @@
 
 What is published (and what is not). The City's minutes are not redistributed: the
 export contains no full text. Per chunk it holds meeting metadata, the agenda item
-reference and heading, an excerpt of at most 300 characters, a link to the official
-minutes page, an int8-quantised embedding, and BM25 term counts keyed by a 32-bit
-hash of each term (no readable word list).
+reference, heading and section path, a link to the official minutes page, an
+int8-quantised embedding, and BM25 term counts keyed by a 32-bit hash of each term (no
+readable word list). Decisions also carry the opening words of the motion (verbatim, at
+most ``EXCERPT_MAX_CHARS`` characters) and the recorded outcome; discussion notes,
+attendance and routine items carry no quoted text (see ``chunking.excerpt_for``).
 
 Files:
 
@@ -88,13 +90,8 @@ def export_demo(index_dir: Path, out_dir: Path) -> dict[str, Any]:
     rows = []
     for c in chunks:
         ex = excerpt_for(c)
-        shown = len(ex.text) + (len(ex.result) + 1 if ex.result else 0)
-        # PA-13: never publish more than 300 characters per passage, always verbatim
-        if (
-            shown > EXCERPT_MAX_CHARS
-            or ex.text not in c.text
-            or (ex.result and ex.result not in c.text)
-        ):
+        # PA-13: a published excerpt is verbatim and never longer than the cap
+        if len(ex.text) > EXCERPT_MAX_CHARS or ex.text not in c.text:
             raise ValueError(f"excerpt for {c.chunk_id} is too long or not verbatim")
         row = {
             "id": c.chunk_id,
@@ -104,12 +101,13 @@ def export_demo(index_dir: Path, out_dir: Path) -> dict[str, Any]:
             "path": " > ".join(c.item_path),
             "anchor": c.item_anchor,
             "kind": c.kind,
-            "excerpt": ex.text,
         }
+        if ex.text:
+            row["excerpt"] = ex.text
         if ex.cut:
             row["cut"] = True
-        if ex.result:
-            row["result"] = ex.result
+        if ex.outcome:
+            row["outcome"] = ex.outcome
         rows.append(row)
 
     # --- vectors -------------------------------------------------------------------

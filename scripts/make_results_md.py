@@ -210,6 +210,40 @@ def main() -> None:
             + ("yes." if b["mobile_horizontal_overflow"] else "no."),
             "",
         ]
+    published = load("published_text")
+    if published:
+        rows = [
+            (
+                f"Excerpts (verbatim, decisions only, at most {published['excerpt_max_chars']} "
+                "characters)",
+                published["excerpts"],
+            ),
+            ('Recorded outcomes ("carried, 9 to 0")', published["outcomes"]),
+            ("Item titles (shown with every result)", published["item_titles"]),
+            ("Section headings (shown with every result)", published["section_headings"]),
+        ]
+        pa13 = published["pa13"]
+        out += [
+            "## Text published in the demo index (PA-13)",
+            "",
+            f"Measured against the parsed minutes ({published['parsed_minutes_chars']:,} "
+            "characters) with `python scripts/published_text_share.py`.",
+            "",
+            "| Published | Count | Characters | Share of the minutes |",
+            "|---|---|---|---|",
+        ]
+        out += [
+            f"| {label} | {v['count']:,} | {v['chars']:,} | {v['share']:.1%} |" for label, v in rows
+        ]
+        out += [
+            f"| Excerpts and outcomes together | | "
+            f"{published['excerpts']['chars'] + published['outcomes']['chars']:,} | "
+            f"{published['excerpts_and_outcomes_share']:.1%} |",
+            "",
+            f"PA-13: {pa13['checked']:,} excerpts checked against their source passages; longest "
+            f"{pa13['longest']} characters; {len(pa13['violations'])} not verbatim or too long.",
+            "",
+        ]
     for summary_path in sorted(RESULTS.glob("answers_*/summary.json")):
         answers = json.loads(summary_path.read_text(encoding="utf-8"))
         out += answers.get("markdown", [])

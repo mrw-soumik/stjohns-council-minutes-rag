@@ -3,6 +3,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
+from council_rag.chunking import EXCERPT_MAX_CHARS
 from council_rag.demo_export import DemoIndex, export_demo, fnv1a32, quantize_int8
 from council_rag.index import IndexMeta, save_index
 from council_rag.retrieval import HybridRetriever
@@ -88,5 +89,11 @@ def test_export_contains_no_full_text(exported) -> None:
         "Members of Council discussed enforcement and the hours of the ban",
     ):
         assert sentence.encode() not in blob
-    for row in DemoIndex(demo_dir).chunks:
-        assert len(row["excerpt"]) <= 300
+    rows = DemoIndex(demo_dir).chunks
+    for row in rows:
+        assert len(row.get("excerpt", "")) <= EXCERPT_MAX_CHARS
+    # only decisions are quoted; notes, attendance and routine items show the title only
+    quoted = {(r["ref"], r["kind"]) for r in rows if r.get("excerpt")}
+    assert ("5.1", "item") not in quoted and ("", "attendance") not in quoted
+    assert ("2.1", "item") not in quoted and ("3.1", "item") in quoted
+    assert {r.get("outcome") for r in rows if r["ref"] == "3.1"} == {"lost, 1 to 3"}
