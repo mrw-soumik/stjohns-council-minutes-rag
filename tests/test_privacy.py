@@ -9,6 +9,7 @@ from fastapi.testclient import TestClient
 
 from council_rag import api, cli
 from council_rag.answers import USAGE_LOG_FIELDS
+from council_rag.index import IndexMeta
 from council_rag.local_llm import LocalAnswerer
 from council_rag.retrieval import HybridRetriever
 from tests.test_local_llm import ScriptedGenerator
@@ -21,7 +22,20 @@ def test_usage_log_has_no_identifiers(two_meeting_chunks, fake_embedder, tmp_pat
     vectors = fake_embedder.embed_documents([c.index_text() for c in two_meeting_chunks])
     state = api.AppState()
     state.retriever = HybridRetriever.build(two_meeting_chunks, vectors, fake_embedder)
-    state.meta = None
+    # A complete in-memory index, so the API never falls back to the on-disk index
+    # (which exists on a developer machine but not in CI).
+    state.meta = IndexMeta(
+        created_at="2026-01-01T00:00:00+00:00",
+        embedding_repo="fake/embedder",
+        embedding_revision="0123456789abcdef",
+        embedding_file="none",
+        max_words=250,
+        index_with_context=True,
+        n_meetings=2,
+        n_chunks=len(two_meeting_chunks),
+        date_min="2023-03-06",
+        date_max="2024-03-04",
+    )
     log_path = tmp_path / "usage.jsonl"
     reply = json.dumps(
         {"answer": "It was defeated 1 to 3.", "cited_passage_ids": [1], "found": True}
