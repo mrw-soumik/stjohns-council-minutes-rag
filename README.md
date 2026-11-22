@@ -4,6 +4,10 @@ Ask a plain-language question about decisions recorded in the City of St. John's
 Meeting minutes and get a short answer that cites the meeting, date and agenda item, with a link
 to the official record, or an honest "not found in the minutes".
 
+**Built with:** retrieval-augmented generation (RAG) in Python: BM25 keyword search and bge-small
+embeddings merged with reciprocal rank fusion, cited answers from a local open model (Qwen3.5-9B on
+MLX) or Claude with Citations, FastAPI, PostgreSQL with pgvector, and a retrieval quality gate in CI.
+
 [![CI](https://github.com/mrw-soumik/stjohns-council-minutes-rag/actions/workflows/ci.yml/badge.svg)](https://github.com/mrw-soumik/stjohns-council-minutes-rag/actions/workflows/ci.yml)
 
 **Live search demo:** https://mrw-soumik.github.io/stjohns-council-minutes-rag/ (runs entirely in
@@ -18,6 +22,8 @@ your browser; nothing you type leaves your device)
 This is Project A of a three-part portfolio by Mostafa Rafiur Wasib. The
 [business analysis](https://github.com/mrw-soumik/business-analysis-council-minutes-search)
 (Project B) defines the requirements; this repository implements them and measures each one.
+The third part, the [St. John's economy dashboard](https://github.com/mrw-soumik/stjohns-economy-powerbi)
+([web version](https://mrw-soumik.github.io/stjohns-economy-powerbi/)), covers data and Power BI.
 
 ## Results at a glance
 
